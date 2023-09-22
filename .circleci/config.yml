@@ -1,0 +1,47 @@
+version: 2.1
+
+orbs:
+  aws-s3: circleci/aws-s3@4.0
+
+executors:
+  default:
+    environment:
+      BUILDKIT_PROGRESS: plain
+      DOCKER_BUILDKIT: 1
+      NO_COLOR: 1  # Disable all coloring for tools that support this
+                   # To fix this: https://github.com/python-poetry/poetry/issues/7184
+    docker:
+      - image: "cimg/python:3.7"
+
+workflows:
+  ci:
+    jobs:
+      - test
+
+jobs:
+  test:
+    executor: default
+    resource_class: small
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - venv-v1-{{ checksum "poetry.lock" }}
+            - venv-v1
+            - venv-
+      - run:
+          name: Install project dependencies
+          command: make install
+      - run:
+          name: Run Linters
+          command: make lint
+      - run:
+          name: Run Tests
+          command: |
+            DOCKER_NETWORK_IP=$(docker network inspect bridge | jq -r ".[0].IPAM.Config[0].Gateway")
+            export DOCKER_NETWORK_IP
+            make test
+      - save_cache:
+          key: venv-v1-{{ checksum "poetry.lock" }}
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs

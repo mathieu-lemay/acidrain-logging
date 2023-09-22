@@ -1,0 +1,13 @@
+services:
+  api:
+    build: ".."
+    command: ["uvicorn", "--factory", "acidrain_logging.testing.api:create_app"]
+    environment:
+      DD_ENV: "testing"
+      DD_SERVICE: "test-api"
+      DD_VERSION: "0.0.0-dev"
+      DD_TRACE_ENABLED: true
+      UVICORN_HOST: "0.0.0.0"
+      UVICORN_PORT: 8000
+    ports:
+      - 8000
