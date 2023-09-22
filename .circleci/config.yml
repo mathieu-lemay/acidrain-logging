@@ -27,8 +27,14 @@ jobs:
       - restore_cache:
           keys:
             - venv-v1-{{ checksum "poetry.lock" }}
-            - venv-v1
+            - venv-v1-
             - venv-
+            - pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
+            - pre-commit-v1-
+            - pre-commit-
+      - run:
+          name: Install pre-commit
+          command: pip install pre-commit
       - run:
           name: Install project dependencies
           command: make install
@@ -45,3 +51,7 @@ jobs:
           key: venv-v1-{{ checksum "poetry.lock" }}
           paths:
             - /home/circleci/.cache/pypoetry/virtualenvs
+      - save_cache:
+          key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
+          paths:
+            - /home/circleci/.cache/pre-commit
