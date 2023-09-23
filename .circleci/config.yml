@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  aws-s3: circleci/aws-s3@4.0
+  aws-cli: circleci/aws-cli@4.0
 
 executors:
   default:
@@ -60,3 +60,22 @@ jobs:
           key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
           paths:
             - "~/.cache/pre-commit"
+
+  build-and-upload:
+    executor: default
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Build package
+          command: |
+            poetry version "$(git describe --always HEAD | sed 's/^v//' | sed 's/-/+/')"
+            poetry build
+#      - aws-cli/setup:
+#          role_arn: "TODO"
+#      - run:
+#          name: Publish package
+#          command: |
+#            token="$(aws codeartifact get-authorization-token --domain TODO --query authorizationToken --output text --region TODO)"
+#            poetry config http-basic.TODO TODO "${token}"
+#            poetry publish
