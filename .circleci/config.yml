@@ -48,7 +48,10 @@ jobs:
           command: |
             DOCKER_NETWORK_IP=$(docker network inspect bridge | jq -r ".[0].IPAM.Config[0].Gateway")
             export DOCKER_NETWORK_IP
+            export PYTEST_ADDOPTS="--junit-xml=test-results/junit.xml"
             make test
+      - store_test_results:
+          path: test-results
       - save_cache:
           key: venv-v1-{{ checksum "poetry.lock" }}
           paths:
