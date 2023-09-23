@@ -13,11 +13,11 @@ repos:
     rev: '1.5.1'  # TODO: py37: Upgrade to latest
     hooks:
       - id: poetry-check
-      - id: poetry-lock
+      - id: poetry-lock  # TODO: py37: This step will be redundant once we use poetry 1.6.0+. Remove it
         args: ["--check"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.0.290'
+    rev: 'v0.0.291'
     hooks:
       - id: ruff
         args: [--fix, --fixable, I, --exit-non-zero-on-fix]
