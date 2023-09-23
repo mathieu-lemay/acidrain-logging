@@ -61,10 +61,12 @@ jobs:
       - store_test_results:
           path: test-results
       - save_cache:
+          name: Save Poetry cache
           key: venv-v1-{{ checksum "poetry.lock" }}
           paths:
             - "~/.cache/pypoetry/virtualenvs"
       - save_cache:
+          name: Save pre-commit cache
           key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
           paths:
             - "~/.cache/pre-commit"
