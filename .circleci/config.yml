@@ -29,11 +29,13 @@ jobs:
     steps:
       - checkout
       - restore_cache:
+          name: Restore Poetry cache
           keys:
             - venv-v1-{{ checksum "poetry.lock" }}
             - venv-v1-
             - venv-
       - restore_cache:
+          name: Restore pre-commit cache
           keys:
             - pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
             - pre-commit-v1-
