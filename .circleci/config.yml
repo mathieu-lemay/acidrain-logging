@@ -17,6 +17,7 @@ workflows:
   ci:
     jobs:
       - test
+      - publish
 
 jobs:
   test:
@@ -29,6 +30,8 @@ jobs:
             - venv-v1-{{ checksum "poetry.lock" }}
             - venv-v1-
             - venv-
+      - restore_cache:
+          keys:
             - pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
             - pre-commit-v1-
             - pre-commit-
@@ -61,7 +64,7 @@ jobs:
           paths:
             - "~/.cache/pre-commit"
 
-  build-and-upload:
+  publish:
     executor: default
     resource_class: small
     steps:
