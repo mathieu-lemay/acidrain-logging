@@ -7,10 +7,19 @@ from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
-from structlog.contextvars import bind_contextvars
+from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.stdlib import BoundLogger
 
 log: BoundLogger = structlog.get_logger()
+
+
+class ContextResetMiddleware(BaseHTTPMiddleware):
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
+        clear_contextvars()
+
+        return await call_next(request)
 
 
 class TraceIdMiddleware(BaseHTTPMiddleware):
@@ -70,3 +79,4 @@ def get_request_data(
 def add_api_middlewares(app: FastAPI) -> None:
     app.add_middleware(LogRequestMiddleware)
     app.add_middleware(TraceIdMiddleware)
+    app.add_middleware(ContextResetMiddleware)

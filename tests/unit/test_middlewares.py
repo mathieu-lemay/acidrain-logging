@@ -6,6 +6,7 @@ from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat, middlewares
 from acidrain_logging.testing.api import create_app
@@ -28,6 +29,23 @@ def api_app(log_config: LogConfig) -> FastAPI:
 @pytest.fixture()
 def api_client(api_app: FastAPI) -> TestClient:
     return TestClient(api_app)
+
+
+def test_context_reset_middleware(
+    api_client: TestClient, caplog: LogCaptureFixture, faker: Faker
+) -> None:
+    extra_value = faker.pystr()
+
+    with bound_contextvars(extra_value=extra_value):
+        resp = api_client.get("/")
+
+    assert resp.is_success
+
+    assert len(caplog.records) == 1
+
+    log_values = caplog.records[0].msg
+    assert isinstance(log_values, dict)  # type check
+    assert "extra_value" not in log_values
 
 
 def test_trace_id_middleware_adds_trace_id_when_no_header(
