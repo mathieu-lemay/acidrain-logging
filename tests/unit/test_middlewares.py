@@ -17,7 +17,7 @@ from acidrain_logging.testing.factories import LogConfigFactory
 def log_config() -> LogConfig:
     logger_levels = {"httpx": "ERROR"}
     return LogConfigFactory.build(
-        output_format=OutputFormat.JSON, level="INFO", logger_levels=logger_levels
+        output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels
     )
 
 
@@ -98,7 +98,7 @@ def test_log_request_middleware(
     assert isinstance(log_values, dict)  # type check
 
     expected_path = f"/value/{key1}/{key2}"
-    assert log_values["message"] == f"GET {expected_path} 200"
+    assert log_values["event"] == f"GET {expected_path} 200"
     assert log_values["request"] == {
         "client": {"remote_ip": "testclient", "user_agent": "testclient"},
         "method": "GET",
