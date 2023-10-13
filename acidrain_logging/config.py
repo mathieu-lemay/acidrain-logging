@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Dict
+from typing import Any, Dict
 
 from pydantic import BaseSettings, Field, validator
 
@@ -27,8 +27,18 @@ class DatadogSettings(BaseSettings):
 
 
 class LogConfig(BaseSettings):
-    class Config:
+    class Config(BaseSettings.Config):
         env_prefix = "acidrain_log_"
+
+        # ANN401: Dynamically typed expressions (typing.Any) are disallowed in
+        # `parse_env_var`
+        # Using the same typing as the parent class
+        @classmethod
+        def parse_env_var(cls, field_name: str, raw_val: str) -> Any:  # noqa: ANN401
+            if field_name == "logger_levels" and raw_val == "":
+                return {}
+
+            return cls.json_loads(raw_val)
 
     level: str = "INFO"
     output_format: OutputFormat = OutputFormat.JSON

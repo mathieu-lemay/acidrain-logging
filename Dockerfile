@@ -1,5 +1,7 @@
 FROM acidrain/python-poetry:3.7-alpine AS build
 
+RUN apk add gcc libc-dev linux-headers
+
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 
@@ -10,6 +12,7 @@ RUN set -eu; \
 
 FROM python:3.7-alpine
 
+USER nobody
 WORKDIR /app
 ENV PATH="/app/.venv/bin:${PATH}"
 

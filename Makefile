@@ -1,4 +1,5 @@
 .PHONY: all
+.NOTPARALLEL:
 
 lint: .PHONY
 	pre-commit run --all-files

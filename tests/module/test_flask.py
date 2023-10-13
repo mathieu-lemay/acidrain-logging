@@ -1,6 +1,5 @@
 import json
 import socket
-from builtins import reversed
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 from unittest.mock import ANY
@@ -16,7 +15,7 @@ from tests.module.conftest import DockerLogs
 
 @pytest.fixture(scope="session")
 def api_base_url(docker_ip: str, docker_services: Services) -> str:
-    port = docker_services.port_for("fastapi", 8000)
+    port = docker_services.port_for("flask", 8000)
 
     base_url = f"http://{docker_ip}:{port}"
 
@@ -39,25 +38,6 @@ async def api_client(api_base_url: str) -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest.mark.usefixtures("api_client")  # ensure the api is up and running
-async def test_api_logging_uses_structlog(docker_logs: DockerLogs) -> None:
-    api_logs = (docker_logs("fastapi")).split("\n")
-
-    for entry in map(json.loads, filter(None, reversed(api_logs))):
-        if entry["message"] == "Application startup complete.":
-            break
-    else:  # pragma: no cover
-        pytest.fail("Could not find app startup log")
-
-    # There was a json log, we just need to ensure the presence of some values.
-    assert entry["dd.env"] == "testing"
-    assert entry["dd.service"] == "test-fastapi"
-    assert entry["dd.version"] == "0.0.0-dev"
-    assert datetime.strptime(  # noqa: DTZ007: Timezone is irrelevant
-        entry["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
-    )
-
-
 async def test_request_logging_includes_all_metadata(
     api_client: AsyncClient, api_base_url: str, docker_logs: DockerLogs
 ) -> None:
@@ -66,7 +46,7 @@ async def test_request_logging_includes_all_metadata(
     resp = await api_client.get("/")
     assert resp.is_success
 
-    api_logs = docker_logs("fastapi", since=timestamp)
+    api_logs = docker_logs("flask", since=timestamp)
 
     parsed_url = urlparse(api_base_url)
 

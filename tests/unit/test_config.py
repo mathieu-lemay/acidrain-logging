@@ -62,3 +62,21 @@ def test_log_config_validate_log_level(*, level: str, is_valid: bool) -> None:
     else:
         with pytest.raises(InvalidLogLevelError, match=f"Invalid log level: {level}"):
             LogConfig(level=level)
+
+
+def test_log_config_logger_levels_can_be_an_empty_string(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """
+    Ensure an empty string is handled like a null value.
+
+    We need this because of the limitation of ACIDRAIN's helm chart generation. The
+    ACIDRAIN_LOG_LOGGER_LEVELS will always be present, but often with an empty string.
+    Treat that as if it was a null value.
+    """
+    with monkeypatch.context() as ctx:
+        ctx.setenv("ACIDRAIN_LOG_LOGGER_LEVELS", "")
+
+        config = LogConfig()
+
+    assert config.logger_levels == {}

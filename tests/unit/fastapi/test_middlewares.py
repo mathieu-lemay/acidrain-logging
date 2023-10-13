@@ -8,9 +8,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from structlog.contextvars import bound_contextvars
 
-from acidrain_logging import LogConfig, OutputFormat, middlewares
-from acidrain_logging.testing.api import create_app
+from acidrain_logging import LogConfig, OutputFormat
+from acidrain_logging.fastapi import middlewares
 from acidrain_logging.testing.factories import LogConfigFactory
+from acidrain_logging.testing.fastapi import create_app
 
 
 @pytest.fixture(scope="module")
@@ -99,7 +100,7 @@ def test_log_request_middleware(
 
     expected_path = f"/value/{key1}/{key2}"
     assert log_values["event"] == f"GET {expected_path} 200"
-    assert log_values["request"] == {
+    assert log_values["http"] == {
         "client": {"remote_ip": "testclient", "user_agent": "testclient"},
         "method": "GET",
         "request": {

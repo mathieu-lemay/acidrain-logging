@@ -1,13 +1,38 @@
 services:
-  api:
+  fastapi:
     build: ".."
-    command: ["uvicorn", "--factory", "acidrain_logging.testing.api:create_app"]
+    command: ["uvicorn", "--factory", "acidrain_logging.testing.fastapi:create_app"]
     environment:
       DD_ENV: "testing"
-      DD_SERVICE: "test-api"
+      DD_SERVICE: "test-fastapi"
       DD_VERSION: "0.0.0-dev"
       DD_TRACE_ENABLED: true
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: 8000
     ports:
       - 8000
+  flask:
+    build: ".."
+    command: ["uwsgi", "--http", ":8000", "--logger-req", "file:/dev/null", "--wsgi", "acidrain_logging.testing.flask.main:app"]
+    environment:
+      DD_ENV: "testing"
+      DD_SERVICE: "test-flask"
+      DD_VERSION: "0.0.0-dev"
+      DD_TRACE_ENABLED: true
+    ports:
+      - 8000
+  worker:
+    build: ".."
+    command: ["celery", "-A", "acidrain_logging.testing.celery", "--quiet", "worker"]
+    environment:
+      DD_ENV: "testing"
+      DD_SERVICE: "test-api"
+      DD_VERSION: "0.0.0-dev"
+      DD_TRACE_ENABLED: true
+    user: nobody
+    tmpfs:
+      - /var/run/celery
+    depends_on:
+      - broker
+  broker:
+    image: "rabbitmq:alpine"

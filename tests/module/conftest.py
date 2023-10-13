@@ -1,6 +1,7 @@
-from __future__ import annotations
-
 import os
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Callable, Optional, cast
 
 import pytest
 from pytest_docker.plugin import DockerComposeExecutor  # type: ignore[import]
@@ -8,7 +9,7 @@ from pytest_docker.plugin import DockerComposeExecutor  # type: ignore[import]
 
 @pytest.fixture(scope="session")
 def docker_compose_project_name() -> str:
-    return "acidrain-workbench"
+    return "acidrain-logging"
 
 
 @pytest.fixture(scope="session")
@@ -27,6 +28,24 @@ def docker_compose_executor(
     )
 
 
+@dataclass
+class DockerLogs:
+    executor: DockerComposeExecutor
+
+    def __call__(self, service: str, since: Optional[datetime] = None) -> str:
+        cmd = ["logs", "--no-log-prefix"]
+        if since:
+            cmd += ["--since", since.isoformat()]
+        cmd.append(service)
+
+        return cast(bytes, self.executor.execute(" ".join(cmd))).decode().strip()
+
+
 @pytest.fixture(scope="session")
-def docker_cleanup() -> str | None:
+def docker_logs(docker_compose_executor: DockerComposeExecutor) -> Callable[[str], str]:
+    return DockerLogs(docker_compose_executor)
+
+
+@pytest.fixture(scope="session")
+def docker_cleanup() -> Optional[str]:
     return None

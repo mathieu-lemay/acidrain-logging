@@ -46,7 +46,7 @@ class LogRequestMiddleware(BaseHTTPMiddleware):
         msg = f"{request.method} {request.url.path} {response.status_code}"
         request_data = get_request_data(request, response, elapsed_ms)
 
-        log.info(msg, request=request_data)
+        log.info(msg, http=request_data)
 
         return response
 
@@ -76,7 +76,7 @@ def get_request_data(
     }
 
 
-def add_api_middlewares(app: FastAPI) -> None:
+def add_log_middlewares(app: FastAPI) -> None:
     app.add_middleware(LogRequestMiddleware)
     app.add_middleware(TraceIdMiddleware)
     app.add_middleware(ContextResetMiddleware)

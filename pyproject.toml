@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acidrain-logging"
-version = "0.1.0"
+version = "0.2.0"
 description = "Common logging library"
 authors = ["Mathieu Lemay <acidrain1@gmail.com>"]
 license = "MIT"
@@ -17,6 +17,16 @@ structlog = "^23.1.0"
 fastapi = {version = "^0.103.1", optional = true}
 uvicorn = {version = "^0.22.0", optional = true}  # TODO: py37: Upgrade to latest
 
+# extra=flask
+# These are the same versions than we have in direct.
+# They all need to be specified because Flask's dependencies are not constrained enough.
+# Keep only latest flask once we update in Direct.
+flask = { version = "^1.1.1", optional = true }
+jinja2 = { version = "^2.11", optional = true }
+werkzeug = { version = "^1.0.0", optional = true }
+MarkupSafe = { version = "^1.1.1", optional = true }
+itsdangerous = { version = "^1.1.0", optional = true }
+
 # extra=datadog
 datadog = {version = "^0.47.0", optional = true}
 ddtrace = {version = "^1.20.1", optional = true}
@@ -26,19 +36,25 @@ importlib-metadata = { version = "^4.0.0", python = "^3.7" }  # TODO: py37: Remo
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
+pytest-cov = "^4.1.0"
 mypy = "^1.4.1"
+celery = { version = "^5.2.7", extras = ["redis"] }  # TODO: py37: Update to latest
+celery-types = "^0.18.0"  # TODO: py37: Update to latest
 faker = "^18.13.0"
 httpx = "^0.24.1"  # TODO: py37: Update to latest
 pydantic-factories = "^1.15"  # TODO: py37: Switch to polyfactories
 pytest-asyncio = "^0.21.1"
-pytest-cov = "^4.1.0"
 pytest-docker = "^2.0.1"
 pytest-freezer = "^0.4.8"
+pytz = "^2023.3.post1"
 types-pytz = "^2023.3.0.1"
+typing-extensions = "^4.7.1"  # TODO: py37: Remove
+uwsgi = "^2.0.22"
 
 [tool.poetry.extras]
 datadog = ["datadog", "ddtrace"]
 fastapi = ["fastapi", "uvicorn"]
+flask = ["flask", "jinja2", "itsdangerous", "markupsafe", "werkzeug" ]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -54,6 +70,12 @@ show_error_codes = true
 plugins = [
     "pydantic.mypy"
 ]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -73,34 +95,17 @@ ignore = [
     "FIX", # flake8-fixme
     "TD", # flake8-todos
 
-    "ANN101",  # Missing type annotation for `self` in method
-    "ANN102",  # Missing type annotation for `cls` in method
-    "D10",  # Missing docstring in ...
-    "D211",  # No blank lines allowed before class docstring
-    "D212",  # Multi-line docstring summary should start at the first line
+    "ANN101", # Missing type annotation for `self` in method
+    "ANN102", # Missing type annotation for `cls` in method
+    "D10", # Missing docstring in ...
+    "D211", # No blank lines allowed before class docstring
+    "D212", # Multi-line docstring summary should start at the first line
 
     # TODO: Remove when upgrading python past py37
     "FA100", # Missing `from __future__ import annotations`, but uses `typing.*`
 ]
 exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".svn",
-    ".tox",
     ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
 ]
 
 [tool.ruff.pep8-naming]
@@ -118,9 +123,6 @@ classmethod-decorators = [
     "S101", # Use of `assert` detected
     "S105", # Possible hardcoded password
     "S311", # Standard pseudo-random generators are not suitable for security/cryptographic purposes.
-]
-"tools/*" = [
-    "INP001", # File `...` is part of an implicit namespace package. Add an `__init__.py`.
 ]
 
 [build-system]

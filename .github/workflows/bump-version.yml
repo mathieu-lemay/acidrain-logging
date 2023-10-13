@@ -1,0 +1,27 @@
+name: Bump version and tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_rule:
+        type: choice
+        required: true
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Poetry
+      run: pip install poetry
+    - name: Bump package version
+      run: poetry version "${{ github.event.inputs.bump_rule }}"
+    - name: Create git tag
+      run: |
+        version="$(poetry version --short)"
+        git commit -a -m "Release v${version}"
+        git tag -a -s -m "Version ${version}" "v${version}"
+        git
