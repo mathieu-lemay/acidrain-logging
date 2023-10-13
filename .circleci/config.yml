@@ -5,8 +5,6 @@ executors:
     environment:
       BUILDKIT_PROGRESS: plain
       DOCKER_BUILDKIT: 1
-      NO_COLOR: 1  # Disable all coloring for tools that support this
-                   # To fix this: https://github.com/python-poetry/poetry/issues/7184
     docker:
       - image: "cimg/python:3.10"
 
@@ -49,7 +47,7 @@ jobs:
           command: |
             DOCKER_NETWORK_IP=$(docker network inspect bridge | jq -r ".[0].IPAM.Config[0].Gateway")
             export DOCKER_NETWORK_IP
-            export PYTEST_ADDOPTS="--junit-xml=test-results/junit.xml"
+            export PYTEST_ADDOPTS="--junit-xml=test-results/junit.xml --color=yes"
             make test
       - store_test_results:
           path: test-results
