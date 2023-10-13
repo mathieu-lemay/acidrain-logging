@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
-from pytest_docker.plugin import DockerComposeExecutor, Services  # type: ignore[import]
+from pytest_docker.plugin import (  # type: ignore[import-untyped]
+    DockerComposeExecutor,
+    Services,
+)
 
 from tests.module.conftest import DockerLogs
 

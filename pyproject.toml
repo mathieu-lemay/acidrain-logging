@@ -8,53 +8,46 @@ readme = "README.md"
 include = ["acidrain_logging/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.10"
 orjson = "^3.9.6"
 pydantic = "^1.10"
 structlog = "^23.1.0"
 
+# extra=celery
+celery = { version = "^5.2.7", extras = ["redis"], optional = true }
+
 # extra=fastapi
-fastapi = {version = "^0.103.1", optional = true}
-uvicorn = {version = "^0.22.0", optional = true}  # TODO: py37: Upgrade to latest
+fastapi = { version = "^0.103.1", optional = true }
+uvicorn = { version = "^0.23.0", optional = true }
 
 # extra=flask
-# These are the same versions than we have in direct.
-# They all need to be specified because Flask's dependencies are not constrained enough.
-# Keep only latest flask once we update in Direct.
-flask = { version = "^1.1.1", optional = true }
-jinja2 = { version = "^2.11", optional = true }
-werkzeug = { version = "^1.0.0", optional = true }
-MarkupSafe = { version = "^1.1.1", optional = true }
-itsdangerous = { version = "^1.1.0", optional = true }
+flask = { version = "^2.0.0", optional = true }
 
 # extra=datadog
-datadog = {version = "^0.47.0", optional = true}
-ddtrace = {version = "^1.20.1", optional = true}
-
-# https://github.com/python/importlib_metadata/issues/411
-importlib-metadata = { version = "^4.0.0", python = "^3.7" }  # TODO: py37: Remove
+datadog = { version = "^0.47.0", optional = true }
+ddtrace = { version = "^1.20.1", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 pytest-cov = "^4.1.0"
 mypy = "^1.4.1"
-celery = { version = "^5.2.7", extras = ["redis"] }  # TODO: py37: Update to latest
-celery-types = "^0.18.0"  # TODO: py37: Update to latest
+celery-types = "^0.20.0"
 faker = "^18.13.0"
-httpx = "^0.24.1"  # TODO: py37: Update to latest
-pydantic-factories = "^1.15"  # TODO: py37: Switch to polyfactories
+httpx = "^0.25.0"
+polyfactory = "^2.9.0"
 pytest-asyncio = "^0.21.1"
 pytest-docker = "^2.0.1"
 pytest-freezer = "^0.4.8"
 pytz = "^2023.3.post1"
+setuptools = "^68.2.2"  # HACK: Needed for PyCharm
 types-pytz = "^2023.3.0.1"
-typing-extensions = "^4.7.1"  # TODO: py37: Remove
 uwsgi = "^2.0.22"
 
 [tool.poetry.extras]
+celery = ["celery"]
 datadog = ["datadog", "ddtrace"]
 fastapi = ["fastapi", "uvicorn"]
-flask = ["flask", "jinja2", "itsdangerous", "markupsafe", "werkzeug" ]
+flask = ["flask"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -86,7 +79,7 @@ addopts = ["-p", "no:anyio", "-p", "asyncio"]
 asyncio_mode = "auto"
 
 [tool.ruff]
-target-version = "py37"
+target-version = "py310"
 select = [
     "ALL"
 ]
@@ -100,9 +93,6 @@ ignore = [
     "D10", # Missing docstring in ...
     "D211", # No blank lines allowed before class docstring
     "D212", # Multi-line docstring summary should start at the first line
-
-    # TODO: Remove when upgrading python past py37
-    "FA100", # Missing `from __future__ import annotations`, but uses `typing.*`
 ]
 exclude = [
     ".venv",

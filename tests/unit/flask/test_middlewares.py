@@ -1,13 +1,13 @@
+import importlib.metadata
 from http import HTTPStatus
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
-import werkzeug  # type: ignore[import]
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
-from flask import Flask  # type: ignore[import]
-from flask.testing import FlaskClient  # type: ignore[import]
+from flask import Flask
+from flask.testing import FlaskClient
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
@@ -101,11 +101,12 @@ def test_log_request_middleware(
     assert isinstance(log_values, dict)  # type check
 
     expected_path = f"/value/{key1}/{key2}"
+    expected_user_agent = f"Werkzeug/{importlib.metadata.version('werkzeug')}"
     assert log_values["event"] == f"GET {expected_path} 200"
     assert log_values["http"] == {
         "client": {
             "remote_ip": "127.0.0.1",
-            "user_agent": f"werkzeug/{werkzeug.__version__}",
+            "user_agent": expected_user_agent,
         },
         "method": "GET",
         "request": {

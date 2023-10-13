@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import ANY
 from uuid import UUID
 
@@ -6,9 +6,9 @@ import pytest
 import structlog
 from _pytest.logging import LogCaptureFixture
 from celery import Celery, Task
-
-# No types available for celery.contrib
-from celery.contrib.testing.worker import TestWorkController  # type: ignore[import]
+from celery.contrib.testing.worker import (  # type: ignore[import-untyped]
+    TestWorkController,
+)
 from freezegun import freeze_time
 from structlog.contextvars import bound_contextvars
 
@@ -18,11 +18,11 @@ from acidrain_logging.testing.utils import retry
 if TYPE_CHECKING:
     from mypy_extensions import KwArg, VarArg
 
-    LoggingTask = Task[[VarArg(Tuple[Any]), KwArg(Dict[str, Any])], int]
+    LoggingTask = Task[[VarArg(tuple[Any]), KwArg(dict[str, Any])], int]
 
 
 @pytest.fixture(scope="session")
-def celery_config() -> Dict[str, Any]:
+def celery_config() -> dict[str, Any]:
     return {"broker_url": "memory://"}
 
 
@@ -38,7 +38,7 @@ def logging_task(
     celery_session_app: Celery, celery_session_worker: TestWorkController
 ) -> "LoggingTask":
     @celery_session_app.task()
-    def _task(*_: Tuple[Any], **__: Dict[str, Any]) -> int:
+    def _task(*_: tuple[Any], **__: dict[str, Any]) -> int:
         structlog.get_logger("test.task").info("Test task is running")
         return 0
 
@@ -110,7 +110,7 @@ def test_task_metadata_is_logged_when_task_completes(
 def test_trace_id_is_propagated_to_all_task_logs(
     logging_task: "LoggingTask",
     caplog: LogCaptureFixture,
-    current_trace_id: Optional[str],
+    current_trace_id: str | None,
 ) -> None:
     """
     All logs should contain the trace id.
@@ -172,7 +172,7 @@ def test_task_publish_time_is_logged_when_task_starts(
 
 @pytest.mark.parametrize("trace_id", [None, "some-trace-id"])
 def test_task_can_be_run_sync(
-    logging_task: "LoggingTask", caplog: LogCaptureFixture, trace_id: Optional[str]
+    logging_task: "LoggingTask", caplog: LogCaptureFixture, trace_id: str | None
 ) -> None:
     """Task should run fine in a synchronous manner, but won't have a publish_tm."""
     if trace_id:
@@ -199,14 +199,14 @@ def test_task_can_be_run_sync(
 
 def find_log_record(
     caplog: LogCaptureFixture, msg: str, task_id: str
-) -> Dict[str, Any]:
-    def _find_record() -> Optional[Dict[str, Any]]:
+) -> dict[str, Any]:
+    def _find_record() -> dict[str, Any] | None:
         return next(
             (
-                cast(Dict[str, Any], r.msg)
+                cast(dict[str, Any], r.msg)
                 for r in caplog.records
                 if msg in r.message
-                and cast(Dict[str, Any], r.msg)["task"]["id"] == task_id
+                and cast(dict[str, Any], r.msg)["task"]["id"] == task_id
             ),
             None,
         )

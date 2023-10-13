@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 from time import perf_counter, sleep
-from typing import Any, Callable, Dict, Generic, Tuple, TypeVar
+from typing import Any, Generic, TypeVar
 
 # TODO: Extract this to a reusable lib, test it and remove no cover directives
 
@@ -29,6 +30,6 @@ class Probe(Generic[T]):
 
 
 def retry(
-    target: Callable[..., T], *args: Tuple[Any], **kwargs: Dict[str, Any]
+    target: Callable[..., T], *args: tuple[Any], **kwargs: dict[str, Any]
 ) -> Probe[T]:
     return Probe(target=partial(target, *args, **kwargs))

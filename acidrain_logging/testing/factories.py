@@ -1,12 +1,13 @@
 import random
-from typing import Any, Dict
+from typing import Any
 
-from pydantic_factories import ModelFactory, Use
+from polyfactory import Use
+from polyfactory.factories.pydantic_factory import ModelFactory
 
 from acidrain_logging import LogConfig
 from acidrain_logging.config import DatadogSettings
 
-EmptyDictFactory: Use[Any, Dict[Any, Any]] = Use(lambda: {})
+EmptyDictFactory: Use[Any, dict[Any, Any]] = Use(lambda: {})
 
 
 class DatadogSettingsFactory(ModelFactory[DatadogSettings]):

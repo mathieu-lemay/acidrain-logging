@@ -1,40 +1,28 @@
 import time
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import structlog
-from flask import Flask, Response, g, request  # type: ignore[import]
+from flask import Flask, Response, g, request
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.stdlib import BoundLogger
-from typing_extensions import Protocol, TypeAlias
-from werkzeug.wrappers import Request  # type: ignore[import]
+from werkzeug.wrappers import Request
 
 log: BoundLogger = structlog.get_logger()
 
-
-# TODO: Import typing stuff from werkzeug when we update to latest
-class StartResponse(Protocol):
-    def __call__(
-        self,
-        __status: str,
-        __headers: List[Tuple[str, str]],
-        __exc_info: Any = ...,  # noqa: ANN401
-    ) -> Callable[[bytes], object]:  # pragma: no cover
-        ...
-
-
-WSGIEnvironment: TypeAlias = Dict[str, Any]
-WSGIApplication: TypeAlias = Callable[[WSGIEnvironment, StartResponse], Iterable[bytes]]
+if TYPE_CHECKING:
+    from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
 
 class BaseMiddleware:
-    def __init__(self, app: WSGIApplication) -> None:
+    def __init__(self, app: "WSGIApplication") -> None:
         self.app = app
 
 
 class ResetContextMiddleware(BaseMiddleware):
     def __call__(
-        self, environ: Dict[str, Any], start_response: StartResponse
+        self, environ: "WSGIEnvironment", start_response: "StartResponse"
     ) -> Iterable[bytes]:
         clear_contextvars()
         return self.app(environ, start_response)
@@ -42,7 +30,7 @@ class ResetContextMiddleware(BaseMiddleware):
 
 class TraceIdMiddleware(BaseMiddleware):
     def __call__(
-        self, environ: Dict[str, Any], start_response: StartResponse
+        self, environ: "WSGIEnvironment", start_response: "StartResponse"
     ) -> Iterable[bytes]:
         req = Request(environ)
 
@@ -91,7 +79,8 @@ def _log_request(response: Response) -> Response:
 
 def add_log_middlewares(app: Flask) -> None:
     for cls in reversed((ResetContextMiddleware, TraceIdMiddleware)):
-        app.wsgi_app = cls(app.wsgi_app)
+        # Types are fine and assigning to a method is what we _must_ do here.
+        app.wsgi_app = cls(app.wsgi_app)  # type: ignore[assignment, method-assign]
 
     app.before_request(_inject_start_time)
     app.after_request(_log_request)
