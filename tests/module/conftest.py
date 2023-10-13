@@ -1,10 +1,11 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, Optional, cast
+from typing import cast
 
 import pytest
-from pytest_docker.plugin import DockerComposeExecutor  # type: ignore[import]
+from pytest_docker.plugin import DockerComposeExecutor  # type: ignore[import-untyped]
 
 
 @pytest.fixture(scope="session")
@@ -32,7 +33,7 @@ def docker_compose_executor(
 class DockerLogs:
     executor: DockerComposeExecutor
 
-    def __call__(self, service: str, since: Optional[datetime] = None) -> str:
+    def __call__(self, service: str, since: datetime | None = None) -> str:
         cmd = ["logs", "--no-log-prefix"]
         if since:
             cmd += ["--since", since.isoformat()]
@@ -47,5 +48,5 @@ def docker_logs(docker_compose_executor: DockerComposeExecutor) -> Callable[[str
 
 
 @pytest.fixture(scope="session")
-def docker_cleanup() -> Optional[str]:
+def docker_cleanup() -> str | None:
     return None

@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict
+from typing import Any
 from uuid import uuid4
 
 import structlog
@@ -53,7 +53,7 @@ class LogRequestMiddleware(BaseHTTPMiddleware):
 
 def get_request_data(
     request: Request, response: Response, elapsed_ms: float
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "method": request.method,
         "client": {

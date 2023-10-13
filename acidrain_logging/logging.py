@@ -1,6 +1,5 @@
 import logging
 from logging import StreamHandler
-from typing import List, Optional, Union
 
 import orjson
 import structlog
@@ -16,7 +15,7 @@ from acidrain_logging.processors import (
 )
 
 
-def configure_logger(log_config: Optional[LogConfig] = None) -> None:
+def configure_logger(log_config: LogConfig | None = None) -> None:
     log_config = log_config or LogConfig()
 
     pre_processors = _get_pre_processors(
@@ -57,8 +56,8 @@ def configure_logger(log_config: Optional[LogConfig] = None) -> None:
 
 
 def _get_pre_processors(
-    config: LogConfig, pre_processors: List[Union[LogProcessor, LogProcessorFactory]]
-) -> List[LogProcessor]:
+    config: LogConfig, pre_processors: list[LogProcessor | LogProcessorFactory]
+) -> list[LogProcessor]:
     processors = []
 
     for pre_processor in pre_processors:

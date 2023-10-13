@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseSettings, Field, validator
 
@@ -43,7 +43,7 @@ class LogConfig(BaseSettings):
     level: str = "INFO"
     output_format: OutputFormat = OutputFormat.JSON
     color: bool = True
-    logger_levels: Dict[str, str] = Field(default={})
+    logger_levels: dict[str, str] = Field(default={})
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
 

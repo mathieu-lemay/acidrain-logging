@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import pytz
@@ -27,12 +27,12 @@ def utcnow() -> datetime:
     return datetime.now(tz=pytz.UTC)
 
 
-def _setup_logging(*_: Tuple[Any], **__: Dict[str, Any]) -> None:
+def _setup_logging(*_: tuple[Any], **__: dict[str, Any]) -> None:
     configure_logger()
 
 
 def _log_celery_startup(
-    sender: str, instance: Worker, **__: Dict[str, Any]
+    sender: str, instance: Worker, **__: dict[str, Any]
 ) -> None:  # pragma: no cover: Covered through module tests
     """Log Celery's banner, which we are hiding with the --quiet param."""
     # Typing is wrong, instance does have `startup_info`
@@ -41,7 +41,7 @@ def _log_celery_startup(
 
 
 def _add_task_meta(
-    headers: Dict[str, Any], *_: Tuple[Any], **__: Dict[str, Any]
+    headers: dict[str, Any], *_: tuple[Any], **__: dict[str, Any]
 ) -> None:
     """Inject publish timestamp and trace id, if available, to all tasks."""
     headers["x_trace_id"] = get_contextvars().get("trace_id") or str(uuid4())
@@ -51,16 +51,15 @@ def _add_task_meta(
 def _task_prerun(
     task_id: str,
     task: "Task[Any, Any]",
-    args: List[Any],
-    kwargs: Dict[str, Any],
-    *_: Tuple[Any],
-    **__: Dict[str, Any],
+    args: list[Any],
+    kwargs: dict[str, Any],
+    *_: tuple[Any],
+    **__: dict[str, Any],
 ) -> None:
     """Add task data to logging context."""
     start_time = utcnow()
 
-    # Typing is wrong, request does have `get`
-    trace_id = task.request.get("x_trace_id")  # type: ignore[attr-defined]
+    trace_id = task.request.get("x_trace_id")
     if trace_id:
         # Bind the trace id if there's one in the props, otherwise, keep the one we may
         # already have
@@ -68,14 +67,13 @@ def _task_prerun(
 
     bind_contextvars(task={"id": task_id, "name": task.name, "start_time": start_time})
 
-    log_data: Dict[str, Any] = {
+    log_data: dict[str, Any] = {
         "task_args": args,
         "task_kwargs": kwargs,
-        "queue": task.request.delivery_info["routing_key"],
+        "queue": task.request.get("delivery_info", {}).get("routing_key"),
     }
 
-    # Typing is wrong, request does have `get`
-    publish_tm = task.request.get("x_publish_tm")  # type: ignore[attr-defined]
+    publish_tm = task.request.get("x_publish_tm")
     if publish_tm:
         log_data["publish_tm"] = publish_tm
         log_data["start_delay"] = (
@@ -88,8 +86,8 @@ def _task_prerun(
 def _task_postrun(
     task: "Task[Any, Any]",
     state: str,
-    *_: Tuple[Any],
-    **__: Dict[str, Any],
+    *_: tuple[Any],
+    **__: dict[str, Any],
 ) -> None:
     """Log the task end and status and reset context."""
     task_ctx = get_contextvars().get("task", {}).copy()

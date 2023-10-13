@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-ast
       - id: check-case-conflict
@@ -10,14 +10,12 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/python-poetry/poetry
-    rev: '1.5.1'  # TODO: py37: Upgrade to latest
+    rev: '1.6.0'
     hooks:
       - id: poetry-check
-      - id: poetry-lock  # TODO: py37: This step will be redundant once we use poetry 1.6.0+. Remove it
-        args: ["--check"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.0.291'
+    rev: 'v0.0.292'
     hooks:
       - id: ruff
         args: [--fix, --fixable, I, --exit-non-zero-on-fix]

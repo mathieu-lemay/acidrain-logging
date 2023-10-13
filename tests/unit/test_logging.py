@@ -1,7 +1,7 @@
 import json
 import logging
+from collections.abc import Generator
 from datetime import datetime, timezone
-from typing import Generator
 
 import pytest
 import structlog

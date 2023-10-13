@@ -1,15 +1,15 @@
 import json
 import socket
 from builtins import reversed
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import AsyncGenerator
 from unittest.mock import ANY
 from urllib.parse import urlparse
 
 import httpx
 import pytest
 from httpx import AsyncClient, RequestError
-from pytest_docker.plugin import Services  # type: ignore[import]
+from pytest_docker.plugin import Services  # type: ignore[import-untyped]
 
 from tests.module.conftest import DockerLogs
 

@@ -1,7 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 from logging import Logger
-from typing import Callable, List, Union
 
 import structlog
 from structlog.typing import EventDict
@@ -113,7 +113,7 @@ DatadogInjectorFactory = LogProcessorFactory(
 )
 
 
-SHARED_PRE_PROCESSORS: List[Union[LogProcessor, LogProcessorFactory]] = [
+SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.contextvars.merge_contextvars,
     structlog.stdlib.add_logger_name,
     structlog.stdlib.add_log_level,
