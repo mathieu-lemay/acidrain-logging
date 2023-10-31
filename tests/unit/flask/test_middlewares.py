@@ -119,3 +119,26 @@ def test_log_request_middleware(
         },
         "url": {"host": "localhost", "path": expected_path, "scheme": "http"},
     }
+
+
+def test_log_request_middleware_ignores_elapsed_if_theres_no_start_time(
+    api_app: Flask,
+    api_client: FlaskClient,
+    caplog: LogCaptureFixture,
+) -> None:
+    funcs = api_app.before_request_funcs
+    api_app.before_request_funcs = {}
+
+    resp = api_client.get("/")
+
+    api_app.before_request_funcs = funcs
+
+    assert resp.status_code == HTTPStatus.OK
+
+    assert len(caplog.records) == 1
+
+    log_values = caplog.records[0].msg
+    assert isinstance(log_values, dict)  # type check
+
+    assert log_values["event"] == "GET / 200"
+    assert "elapsed" not in log_values["http"]["response"]

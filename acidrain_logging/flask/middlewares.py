@@ -1,6 +1,6 @@
 import time
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import structlog
@@ -51,7 +51,7 @@ def _log_request(response: Response) -> Response:
     if ":" in host:  # pragma: no cover: tested through module test
         host = host.split(":")[0]
 
-    request_data = {
+    request_data: dict[str, Any] = {
         "method": request.method,
         "client": {
             "remote_ip": request.remote_addr,
@@ -67,10 +67,15 @@ def _log_request(response: Response) -> Response:
             "scheme": request.scheme,
         },
         "response": {
-            "elapsed": round((time.perf_counter() - g.start_time) * 1000, 3),
             "status_code": response.status_code,
         },
     }
+
+    start_time = g.get("start_time")
+    if start_time:
+        request_data["response"]["elapsed"] = round(
+            (time.perf_counter() - start_time) * 1000, 3
+        )
 
     log.info(msg, http=request_data)
 
