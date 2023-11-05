@@ -21,6 +21,7 @@ class DatadogSettings(BaseSettings):
     class Config:
         env_prefix = "dd_"
 
+    injection_enabled: bool = True
     env: str = ""
     service: str = ""
     version: str = ""

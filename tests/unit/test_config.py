@@ -2,7 +2,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import InvalidLogLevelError
+from acidrain_logging.config import DatadogSettings, InvalidLogLevelError
 
 
 def test_log_config(monkeypatch: MonkeyPatch) -> None:
@@ -80,3 +80,27 @@ def test_log_config_logger_levels_can_be_an_empty_string(
         config = LogConfig()
 
     assert config.logger_levels == {}
+
+
+def test_datadog_settings(monkeypatch: MonkeyPatch) -> None:
+    with monkeypatch.context() as ctx:
+        ctx.setenv("DD_INJECTION_ENABLED", "false")
+        ctx.setenv("DD_ENV", "test")
+        ctx.setenv("DD_SERVICE", "acidrain-logging")
+        ctx.setenv("DD_VERSION", "42.6.9")
+
+        dd = DatadogSettings()
+
+    assert dd.injection_enabled is False
+    assert dd.env == "test"
+    assert dd.service == "acidrain-logging"
+    assert dd.version == "42.6.9"
+
+
+def test_datadog_settings_default_values() -> None:
+    dd = DatadogSettings()
+
+    assert dd.injection_enabled is True
+    assert dd.env == ""
+    assert dd.service == ""
+    assert dd.version == ""
