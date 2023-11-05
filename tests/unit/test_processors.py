@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from copy import deepcopy
 from logging import Logger
-from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
@@ -9,8 +8,10 @@ from faker import Faker
 from structlog.processors import TimeStamper
 
 from acidrain_logging import LogConfig, OutputFormat
+from acidrain_logging.config import DatadogSettings
 from acidrain_logging.processors import (
     datadog_injector,
+    datadog_injector_builder,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
@@ -18,9 +19,6 @@ from acidrain_logging.processors import (
     timestamper_builder,
 )
 from acidrain_logging.testing.factories import DatadogSettingsFactory
-
-if TYPE_CHECKING:
-    from acidrain_logging.config import DatadogSettings
 
 
 def test_null_processor_returns_the_event_dict_untouched(faker: Faker) -> None:
@@ -142,3 +140,28 @@ def test_datadog_injector_adds_the_span_values_if_there_is_one(
 
     assert event_dict["dd.span_id"] == span_id
     assert event_dict["dd.trace_id"] == trace_id
+
+
+@pytest.mark.parametrize("dd_enabled", [False, True])
+@patch("acidrain_logging.processors.tracer", new=None)
+def test_datadog_injector_builder_returns_the_right_processor(
+    faker: Faker, dd_enabled: bool
+) -> None:
+    config = LogConfig(datadog=DatadogSettings(injection_enabled=dd_enabled))
+    processor = datadog_injector_builder(config)
+
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+    msg = faker.pystr()
+
+    event_dict = {"event": msg}
+
+    event = processor(logger, method_name, event_dict)
+
+    dd_keys = {"dd.env", "dd.service", "dd.version"}
+    event_dd_keys = event.keys() & dd_keys
+
+    if dd_enabled:
+        assert event_dd_keys == dd_keys
+    else:
+        assert event_dd_keys == set()

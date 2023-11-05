@@ -106,11 +106,14 @@ def datadog_injector(
     return event_dict
 
 
-DatadogInjectorFactory = LogProcessorFactory(
-    builder=lambda settings: partial(
-        datadog_injector, datadog_settings=settings.datadog
-    )
-)
+def datadog_injector_builder(config: LogConfig) -> LogProcessor:
+    if not config.datadog.injection_enabled:
+        return null_processor
+
+    return partial(datadog_injector, datadog_settings=config.datadog)
+
+
+DatadogInjectorFactory = LogProcessorFactory(builder=datadog_injector_builder)
 
 
 SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
