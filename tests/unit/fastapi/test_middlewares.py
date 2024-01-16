@@ -101,7 +101,7 @@ def test_log_request_middleware(
     expected_path = f"/value/{key1}/{key2}"
     assert log_values["event"] == f"GET {expected_path} 200"
     assert log_values["http"] == {
-        "client": {"remote_ip": "testclient", "user_agent": "testclient"},
+        "client": {"remote_ip": None, "user_agent": "testclient"},
         "method": "GET",
         "request": {
             "path_params": {"key1": key1, "key2": key2},
