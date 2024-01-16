@@ -11,35 +11,35 @@ include = ["acidrain_logging/py.typed"]
 python = "^3.10"
 orjson = "^3.9.6"
 pydantic = "^1.10"
-structlog = "^23.1.0"
+structlog = "^24.1.0"
 
 # extra=celery
 celery = { version = "^5.2.7", extras = ["redis"], optional = true }
 
 # extra=fastapi
-fastapi = { version = "^0.103.1", optional = true }
-uvicorn = { version = "^0.23.0", optional = true }
+fastapi = { version = "^0.109.0", optional = true }
+uvicorn = { version = "^0.25.0", optional = true }
 
 # extra=flask
 flask = { version = "^2.0.0", optional = true }
 
 # extra=datadog
 datadog = { version = "^0.47.0", optional = true }
-ddtrace = { version = "^1.20.1", optional = true }
+ddtrace = { version = "^2.4.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 pytest-cov = "^4.1.0"
 mypy = "^1.4.1"
-celery-types = "^0.20.0"
-faker = "^18.13.0"
-httpx = "^0.25.0"
+celery-types = "^0.21.0"
+faker = "^22.2.0"
+httpx = "^0.26.0"
 polyfactory = "^2.9.0"
-pytest-asyncio = "^0.21.1"
+pytest-asyncio = "^0.23.3"
 pytest-docker = "^2.0.1"
 pytest-freezer = "^0.4.8"
 pytz = "^2023.3.post1"
-setuptools = "^68.2.2"  # HACK: Needed for PyCharm
+setuptools = "^69.0.3"  # HACK: Needed for PyCharm
 types-pytz = "^2023.3.0.1"
 uwsgi = "^2.0.22"
 
