@@ -43,8 +43,6 @@ jobs:
       - run:
           name: Run Tests
           command: |
-            DOCKER_NETWORK_IP=$(docker network inspect bridge | jq -r ".[0].IPAM.Config[0].Gateway")
-            export DOCKER_NETWORK_IP
             export PYTEST_ADDOPTS="--junit-xml=test-results/junit.xml --color=yes"
             make test
       - store_test_results:
