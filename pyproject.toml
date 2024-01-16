@@ -22,7 +22,7 @@ fastapi = { version = "^0.109.0", optional = true }
 uvicorn = { version = "^0.25.0", optional = true }
 
 # extra=flask
-flask = { version = "^2.0.0", optional = true }
+flask = { version = "^3.0.0", optional = true }
 
 # extra=datadog
 datadog = { version = "^0.47.0", optional = true }
