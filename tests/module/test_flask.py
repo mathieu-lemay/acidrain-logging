@@ -1,14 +1,14 @@
 import json
 import socket
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import ANY
 from urllib.parse import urlparse
 
 import httpx
 import pytest
 from httpx import AsyncClient, RequestError
-from pytest_docker.plugin import Services  # type: ignore[import-untyped]
+from pytest_docker.plugin import Services
 
 from tests.module.conftest import DockerLogs
 
@@ -41,7 +41,7 @@ async def api_client(api_base_url: str) -> AsyncGenerator[AsyncClient, None]:
 async def test_request_logging_includes_all_metadata(
     api_client: AsyncClient, api_base_url: str, docker_logs: DockerLogs
 ) -> None:
-    timestamp = datetime.now(tz=timezone.utc)
+    timestamp = datetime.now(tz=UTC)
 
     resp = await api_client.get("/")
     assert resp.is_success

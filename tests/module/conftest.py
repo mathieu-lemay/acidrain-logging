@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import cast
 
 import pytest
-from pytest_docker.plugin import DockerComposeExecutor  # type: ignore[import-untyped]
+from pytest_docker.plugin import DockerComposeExecutor
 
 
 @pytest.fixture(scope="session")

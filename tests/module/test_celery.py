@@ -1,11 +1,11 @@
 import json
 import re
 from builtins import reversed
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
-from pytest_docker.plugin import (  # type: ignore[import-untyped]
+from pytest_docker.plugin import (
     DockerComposeExecutor,
     Services,
 )
@@ -50,7 +50,7 @@ async def test_celery_logs_the_startup_banner(docker_logs: DockerLogs) -> None:
 async def test_task_logging_includes_task_id_and_trace_id(
     docker_logs: DockerLogs, docker_compose_executor: DockerComposeExecutor
 ) -> None:
-    timestamp = datetime.now(tz=timezone.utc)
+    timestamp = datetime.now(tz=UTC)
 
     python_cmd = (
         "from acidrain_logging.testing.celery import dummy_task; "
@@ -82,7 +82,7 @@ async def test_task_logging_includes_task_id_and_trace_id(
 async def test_task_start_log_includes_publish_tm(
     docker_logs: DockerLogs, docker_compose_executor: DockerComposeExecutor
 ) -> None:
-    timestamp = datetime.now(tz=timezone.utc)
+    timestamp = datetime.now(tz=UTC)
 
     python_cmd = (
         "from acidrain_logging.testing.celery import dummy_task; "

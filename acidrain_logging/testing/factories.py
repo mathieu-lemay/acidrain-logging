@@ -7,7 +7,7 @@ from polyfactory.factories.pydantic_factory import ModelFactory
 from acidrain_logging import LogConfig
 from acidrain_logging.config import DatadogSettings
 
-EmptyDictFactory: Use[Any, dict[Any, Any]] = Use(lambda: {})
+EmptyDictFactory: Use[Any, dict[Any, Any]] = Use(dict)
 
 
 class DatadogSettingsFactory(ModelFactory[DatadogSettings]):

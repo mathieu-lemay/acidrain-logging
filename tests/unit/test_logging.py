@@ -1,7 +1,7 @@
 import json
 import logging
 from collections.abc import Generator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import structlog
@@ -53,9 +53,7 @@ def test_configure_logger_initializes_the_logger_with_the_default_config(
         >= {
             "logger": log_name,
             "level": "info",
-            "timestamp": datetime.now(tz=timezone.utc).strftime(
-                "%Y-%m-%dT%H:%M:%S.%fZ"
-            ),
+            "timestamp": datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "message": msg_info,
         }.items()
     )
