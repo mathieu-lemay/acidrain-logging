@@ -13,9 +13,10 @@ repos:
     rev: '1.8.0'
     hooks:
       - id: poetry-check
+        args: ["--lock"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.2.2'
+    rev: 'v0.3.3'
     hooks:
       - id: ruff
         args: [--fix, --fixable, I, --exit-non-zero-on-fix]
