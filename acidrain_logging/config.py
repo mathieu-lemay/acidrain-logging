@@ -31,6 +31,9 @@ class DatadogSettings(BaseSettings):
     service: str = ""
     version: str = ""
 
+    def is_enabled(self) -> bool:
+        return self.injection_enabled and any((self.env, self.service, self.version))
+
 
 # TODO: Just use env_ignore_empty=True when available
 #       See: https://github.com/pydantic/pydantic-settings/pull/198

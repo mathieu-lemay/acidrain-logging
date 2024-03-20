@@ -107,7 +107,7 @@ def datadog_injector(
 
 
 def datadog_injector_builder(config: LogConfig) -> LogProcessor:
-    if not config.datadog.injection_enabled:
+    if not config.datadog.is_enabled():
         return null_processor
 
     return partial(datadog_injector, datadog_settings=config.datadog)

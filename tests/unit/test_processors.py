@@ -142,12 +142,35 @@ def test_datadog_injector_adds_the_span_values_if_there_is_one(
     assert event_dict["dd.trace_id"] == trace_id
 
 
-@pytest.mark.parametrize("dd_enabled", [False, True])
+@pytest.mark.parametrize(
+    ("dd_enabled", "dd_env", "dd_service", "dd_version", "should_be_enabled"),
+    [
+        (False, "", "", "", False),
+        (False, "some-env", "some-service", "some-version", False),
+        (True, "", "", "", False),
+        (True, "some-env", "", "", True),
+        (True, "", "some-service", "", True),
+        (True, "", "", "some-version", True),
+        (True, "some-env", "some-service", "some-version", True),
+    ],
+)
 @patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_builder_returns_the_right_processor(
-    faker: Faker, dd_enabled: bool
+def test_datadog_injector_builder_returns_the_right_processor(  # noqa: PLR0913: too many args
+    faker: Faker,
+    dd_enabled: bool,
+    dd_env: str,
+    dd_service: str,
+    dd_version: str,
+    should_be_enabled: bool,
 ) -> None:
-    config = LogConfig(datadog=DatadogSettings(injection_enabled=dd_enabled))
+    config = LogConfig(
+        datadog=DatadogSettings(
+            injection_enabled=dd_enabled,
+            env=dd_env,
+            service=dd_service,
+            version=dd_version,
+        )
+    )
     processor = datadog_injector_builder(config)
 
     logger = Mock(Logger)
@@ -161,7 +184,7 @@ def test_datadog_injector_builder_returns_the_right_processor(
     dd_keys = {"dd.env", "dd.service", "dd.version"}
     event_dd_keys = event.keys() & dd_keys
 
-    if dd_enabled:
+    if should_be_enabled:
         assert event_dd_keys == dd_keys
     else:
         assert event_dd_keys == set()
