@@ -48,5 +48,8 @@ def docker_logs(docker_compose_executor: DockerComposeExecutor) -> Callable[[str
 
 
 @pytest.fixture(scope="session")
-def docker_cleanup() -> str | None:
+def docker_cleanup(docker_cleanup: str | None) -> str | None:  # pragma: no cover
+    if os.getenv("DOCKER_FORCE_CLEANUP"):
+        return docker_cleanup
+
     return None
