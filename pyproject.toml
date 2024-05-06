@@ -78,6 +78,9 @@ testpaths = ["tests/unit", "tests/module", "tests"]
 # https://docs.pytest.org/en/6.2.x/writing_plugins.html#plugin-discovery-order-at-tool-startup
 addopts = ["-p", "no:anyio", "-p", "asyncio"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:cannot collect test class 'TestWorkController'",
+]
 
 [tool.ruff]
 target-version = "py311"
