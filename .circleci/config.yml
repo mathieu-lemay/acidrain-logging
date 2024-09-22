@@ -20,10 +20,10 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: Restore venv cache
+          name: Restore uv cache
           keys:
-            - venv-v2-{{ checksum "uv.lock" }}
-            - venv-v2-
+            - uv-v1-{{ checksum "uv.lock" }}
+            - uv-v1-
       - restore_cache:
           name: Restore pre-commit cache
           keys:
@@ -35,15 +35,15 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
       - run:
           name: Install pre-commit
-          command: |
-            export PATH="${HOME}/.local/bin:$PATH"
-            uv tool install pre-commit
+          command: uv tool install pre-commit
       - run:
           name: Install project dependencies
           command: make install
       - run:
           name: Run Linters
-          command: make lint
+          command: |
+            export PATH="${HOME}/.local/bin:$PATH"
+            make lint
       - run:
           name: Run Tests
           command: |
@@ -52,10 +52,10 @@ jobs:
       - store_test_results:
           path: test-results
       - save_cache:
-          name: Save venv cache
-          key: venv-v2-{{ checksum "uv.lock" }}
+          name: Save uv cache
+          key: uv-v1-{{ checksum "uv.lock" }}
           paths:
-            - ".venv"
+            - "~/.cache/uv"
       - save_cache:
           name: Save pre-commit cache
           key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
