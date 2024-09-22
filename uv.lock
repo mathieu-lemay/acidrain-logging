@@ -62,7 +62,7 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.115.0" },
     { name = "flask", marker = "extra == 'flask'", specifier = ">=3.0.3" },
     { name = "importlib-metadata", specifier = ">=8.5.0" },
-    { name = "orjson", specifier = "~=3.8.0" },
+    { name = "orjson", specifier = ">=3.8.0" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = ">=2.5.2" },
     { name = "structlog", specifier = ">=24.4.0" },

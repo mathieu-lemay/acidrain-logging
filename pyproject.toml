@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 include = ["acidrain_logging/py.typed"]
 dependencies = [
     "importlib-metadata>=8.5.0",
-    "orjson~=3.8.0",
+    "orjson>=3.8.0",
     "pydantic-settings>=2.5.2",
     "pydantic>=2.9.2",
     "structlog>=24.4.0",
