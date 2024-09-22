@@ -1,13 +1,15 @@
-FROM acidrain/python-poetry:3.10-alpine AS build
+FROM python:3.10-alpine AS build
 
-RUN apk add gcc libc-dev linux-headers
+RUN apk add curl gcc libc-dev linux-headers
+
+RUN curl -LsSf https://astral.sh/uv/install.sh \
+    | INSTALLER_NO_MODIFY_PATH=1 UV_INSTALL_DIR=/usr/local sh
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 
 RUN set -eu; \
-    poetry config virtualenvs.in-project true; \
-    poetry install --all-extras --no-root
+    uv sync --all-extras
 
 
 FROM python:3.10-alpine
