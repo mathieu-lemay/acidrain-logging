@@ -20,20 +20,22 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: Restore Poetry cache
+          name: Restore venv cache
           keys:
-            - venv-v1-{{ checksum "poetry.lock" }}
-            - venv-v1-
-            - venv-
+            - venv-v2-{{ checksum "uv.lock" }}
+            - venv-v2-
       - restore_cache:
           name: Restore pre-commit cache
           keys:
             - pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
             - pre-commit-v1-
-            - pre-commit-
       - run:
-          name: Install poetry and pre-commit
-          command: pip3 install poetry pre-commit
+          name: Install uv
+          command: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Install pre-commit
+          command: uv tool install pre-commit
       - run:
           name: Install project dependencies
           command: make install
@@ -48,10 +50,10 @@ jobs:
       - store_test_results:
           path: test-results
       - save_cache:
-          name: Save Poetry cache
-          key: venv-v1-{{ checksum "poetry.lock" }}
+          name: Save venv cache
+          key: venv-v2-{{ checksum "uv.lock" }}
           paths:
-            - "~/.cache/pypoetry/virtualenvs"
+            - ".venv"
       - save_cache:
           name: Save pre-commit cache
           key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}
