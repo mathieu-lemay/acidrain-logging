@@ -11,9 +11,9 @@ test: .PHONY
 		--verbosity=1
 
 install: .PHONY
-	poetry install --sync --all-extras
+	uv sync --all-extras
 
-update: poetry.lock install
+update: uv.lock install
 
 poetry.lock: .PHONY
 	poetry update --lock
