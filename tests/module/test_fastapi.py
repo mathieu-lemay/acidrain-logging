@@ -1,6 +1,5 @@
 import json
 import socket
-from builtins import reversed
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from unittest.mock import ANY
@@ -33,7 +32,7 @@ def api_base_url(docker_ip: str, docker_services: Services) -> str:
     return base_url
 
 
-@pytest.fixture()
+@pytest.fixture
 async def api_client(api_base_url: str) -> AsyncGenerator[AsyncClient, None]:
     async with httpx.AsyncClient(base_url=api_base_url) as client:
         yield client

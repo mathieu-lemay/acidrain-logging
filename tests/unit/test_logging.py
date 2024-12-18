@@ -13,7 +13,7 @@ from structlog.contextvars import bound_contextvars
 from acidrain_logging import LogConfig, OutputFormat, configure_logger
 
 
-@pytest.fixture()
+@pytest.fixture
 def _log_restore() -> Generator[None, None, None]:
     logger = logging.getLogger()
     handlers = [*logger.handlers]
@@ -25,7 +25,7 @@ def _log_restore() -> Generator[None, None, None]:
         logger.handlers = handlers
 
 
-@pytest.fixture()
+@pytest.fixture
 def caplog(caplog: LogCaptureFixture, _log_restore: None) -> LogCaptureFixture:
     return caplog
 

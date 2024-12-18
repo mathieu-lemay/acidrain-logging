@@ -98,8 +98,6 @@ ignore = [
     "FIX", # flake8-fixme
     "TD", # flake8-todos
 
-    "ANN101", # Missing type annotation for `self` in method
-    "ANN102", # Missing type annotation for `cls` in method
     "D10", # Missing docstring in ...
     "D211", # No blank lines allowed before class docstring
     "D212", # Multi-line docstring summary should start at the first line

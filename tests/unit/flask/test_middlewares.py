@@ -29,7 +29,7 @@ def api_app(log_config: LogConfig) -> Flask:
     return create_app(log_config)
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_client(api_app: Flask) -> FlaskClient:
     return api_app.test_client()
 

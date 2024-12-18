@@ -27,7 +27,7 @@ def api_app(log_config: LogConfig) -> FastAPI:
     return create_app(log_config)
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_client(api_app: FastAPI) -> TestClient:
     return TestClient(api_app)
 

@@ -63,7 +63,7 @@ class LogConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="acidrain_log_")
 
     @classmethod
-    def settings_customise_sources(  # noqa: PLR0913: Too many arguments (6 > 5)
+    def settings_customise_sources(
         cls,
         settings_cls: type[BaseSettings],  # noqa: ARG003: Unused argument
         init_settings: PydanticBaseSettingsSource,
