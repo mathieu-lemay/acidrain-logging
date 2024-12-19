@@ -47,6 +47,7 @@ async def test_api_logging_uses_structlog(docker_logs: DockerLogs) -> None:
             break
     else:  # pragma: no cover
         pytest.fail("Could not find app startup log")
+        return
 
     # There was a json log, we just need to ensure the presence of some values.
     assert entry["dd.env"] == "testing"
