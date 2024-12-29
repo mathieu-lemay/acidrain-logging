@@ -2,6 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 from logging import Logger
+from typing import Any
 
 import structlog
 from structlog.typing import EventDict
@@ -30,15 +31,17 @@ class LogProcessorFactory:
 
 
 def timestamper_builder(config: LogConfig) -> LogProcessor:
-    kwargs = {}
+    kwargs: dict[str, Any] = {}
 
     # TODO: Check if needed for DD logs
     if config.output_format == OutputFormat.JSON:
         kwargs["key"] = config.timestamp_key
+    else:
+        kwargs["utc"] = False
 
     return structlog.processors.TimeStamper(
         fmt=config.timestamp_format,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 
