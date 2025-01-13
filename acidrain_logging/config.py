@@ -21,16 +21,13 @@ class InvalidLogLevelError(Exception):
         super().__init__(f"Invalid log level: {value}")
 
 
-class DatadogSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="dd_")
+class OtelSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="otel_")
 
     injection_enabled: bool = True
-    env: str = ""
-    service: str = ""
-    version: str = ""
 
     def is_enabled(self) -> bool:
-        return self.injection_enabled and any((self.env, self.service, self.version))
+        return self.injection_enabled
 
 
 class LogConfig(BaseSettings):
@@ -43,7 +40,7 @@ class LogConfig(BaseSettings):
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
 
-    datadog: DatadogSettings = Field(default_factory=DatadogSettings)
+    otel: OtelSettings = Field(default_factory=OtelSettings)
 
     @field_validator("level")
     def validate_log_level(cls, value: str) -> str:

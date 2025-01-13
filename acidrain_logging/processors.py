@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from functools import partial
 from logging import Logger
 from typing import Any
 
@@ -8,12 +7,11 @@ import structlog
 from structlog.typing import EventDict
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import DatadogSettings
 
 try:
-    from ddtrace import tracer
+    from opentelemetry import trace
 except ImportError:  # pragma: no cover
-    tracer = None  # type: ignore[assignment]
+    trace = None  # type: ignore[assignment]
 
 LogProcessor = Callable[[Logger, str, EventDict], EventDict]
 
@@ -55,9 +53,8 @@ def event_renamer(
     """
     Rename `event` key to `message`.
 
-    Log entries keep the text message in the `event` field, but Datadog
-    uses the `message` field. This processor moves the value from one field to
-    the other.
+    Log entries keep the text message in the `event` field, but message is usually more
+    appropriate. This processor moves the value from one field to the other.
     See https://github.com/hynek/structlog/issues/35#issuecomment-591321744
     """
     event_dict["message"] = event_dict.pop("event")
@@ -87,36 +84,40 @@ def drop_color_message_key(
     return event_dict
 
 
-def datadog_injector(
+def otel_processor(
     _logger: Logger,
     _method_name: str,
     event_dict: EventDict,
-    *,
-    datadog_settings: DatadogSettings,
 ) -> EventDict:
-    event_dict.update(
-        {
-            "dd.env": datadog_settings.env,
-            "dd.service": datadog_settings.service,
-            "dd.version": datadog_settings.version,
-        }
-    )
+    # TODO:
+    # - Test without otel
+    # - Test with otel but no tracing / invalid span
+    # - Test with otel
+    span = trace and trace.get_current_span()
+    if not span:
+        return event_dict
 
-    span = tracer and tracer.current_span()
-    if span:
-        event_dict.update({"dd.span_id": span.span_id, "dd.trace_id": span.trace_id})
+    ctx = span.get_span_context()
+    if not ctx.is_valid:
+        return event_dict
+
+    event_dict.update({
+        "otel.span_name": getattr(span, "name", None),
+        "otel.span_id": trace.format_span_id(ctx.span_id),
+        "otel.trace_id": trace.format_trace_id(ctx.trace_id),
+    })
 
     return event_dict
 
 
-def datadog_injector_builder(config: LogConfig) -> LogProcessor:
-    if not config.datadog.is_enabled():
+def otel_processor_builder(config: LogConfig) -> LogProcessor:
+    if not config.otel.is_enabled():
         return null_processor
 
-    return partial(datadog_injector, datadog_settings=config.datadog)
+    return otel_processor
 
 
-DatadogInjectorFactory = LogProcessorFactory(builder=datadog_injector_builder)
+OtelInjectorFactory = LogProcessorFactory(builder=otel_processor_builder)
 
 
 SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
@@ -130,5 +131,5 @@ SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.processors.StackInfoRenderer(),
     drop_color_message_key,
     EventRenamerFactory,
-    DatadogInjectorFactory,
+    OtelInjectorFactory,
 ]
