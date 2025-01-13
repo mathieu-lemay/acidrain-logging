@@ -5,20 +5,21 @@ from unittest.mock import Mock, patch
 
 import pytest
 from faker import Faker
+from opentelemetry.trace import Span, SpanContext, format_span_id, format_trace_id
 from structlog.processors import TimeStamper
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import DatadogSettings
+from acidrain_logging.config import OtelSettings
 from acidrain_logging.processors import (
-    datadog_injector,
-    datadog_injector_builder,
+    LogProcessor,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
     null_processor,
+    otel_processor,
+    otel_processor_builder,
     timestamper_builder,
 )
-from acidrain_logging.testing.factories import DatadogSettingsFactory
 
 
 def test_null_processor_returns_the_event_dict_untouched(faker: Faker) -> None:
@@ -110,82 +111,47 @@ def test_drop_color_message_key_drops_the_color_message(faker: Faker) -> None:
     }
 
 
-@patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_adds_the_datadog_values(faker: Faker) -> None:
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-
-    dd_settings: DatadogSettings = DatadogSettingsFactory.build()
-
-    assert datadog_injector(logger, method_name, {}, datadog_settings=dd_settings) == {
-        "dd.env": dd_settings.env,
-        "dd.service": dd_settings.service,
-        "dd.version": dd_settings.version,
-    }
-
-
-@patch("acidrain_logging.processors.tracer")
-def test_datadog_injector_adds_the_span_values_if_there_is_one(
-    mock_tracer: Mock, faker: Faker
+@patch("acidrain_logging.processors.trace")
+def test_otel_injector_adds_the_span_values_if_there_is_one(
+    mock_trace: Mock, faker: Faker
 ) -> None:
     logger = Mock(Logger)
     method_name = faker.pystr()
 
-    span_id = faker.pystr()
-    trace_id = faker.pystr()
-    mock_tracer.current_span.return_value = Mock(span_id=span_id, trace_id=trace_id)
+    span_name = faker.pystr()
+    span_id = faker.pyint()
+    trace_id = faker.pyint()
 
-    event_dict = datadog_injector(
-        logger, method_name, {}, datadog_settings=DatadogSettingsFactory.build()
+    mock_span_ctx = Mock(
+        spec=SpanContext, span_id=span_id, trace_id=trace_id, is_valid=True
     )
 
-    assert event_dict["dd.span_id"] == span_id
-    assert event_dict["dd.trace_id"] == trace_id
+    mock_span = Mock(spec=Span)
+    mock_span.name = span_name
+    mock_span.get_span_context.return_value = mock_span_ctx
+
+    mock_trace.get_current_span.return_value = mock_span
+    mock_trace.format_span_id = format_span_id
+    mock_trace.format_trace_id = format_trace_id
+
+    event_dict = otel_processor(logger, method_name, {})
+
+    assert event_dict["otel.span_name"] == span_name
+    assert event_dict["otel.span_id"] == format_span_id(span_id)
+    assert event_dict["otel.trace_id"] == format_trace_id(trace_id)
 
 
 @pytest.mark.parametrize(
-    ("dd_enabled", "dd_env", "dd_service", "dd_version", "should_be_enabled"),
+    ("otel_enabled", "expected"),
     [
-        (False, "", "", "", False),
-        (False, "some-env", "some-service", "some-version", False),
-        (True, "", "", "", False),
-        (True, "some-env", "", "", True),
-        (True, "", "some-service", "", True),
-        (True, "", "", "some-version", True),
-        (True, "some-env", "some-service", "some-version", True),
+        (False, null_processor),
+        (True, otel_processor),
     ],
 )
-@patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_builder_returns_the_right_processor(  # noqa: PLR0913: too many args
-    faker: Faker,
-    dd_enabled: bool,
-    dd_env: str,
-    dd_service: str,
-    dd_version: str,
-    should_be_enabled: bool,
+def test_otel_processor_builder_returns_the_right_processor(
+    otel_enabled: bool, expected: LogProcessor
 ) -> None:
-    config = LogConfig(
-        datadog=DatadogSettings(
-            injection_enabled=dd_enabled,
-            env=dd_env,
-            service=dd_service,
-            version=dd_version,
-        )
-    )
-    processor = datadog_injector_builder(config)
+    config = LogConfig(otel=OtelSettings(injection_enabled=otel_enabled))
+    processor = otel_processor_builder(config)
 
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-    msg = faker.pystr()
-
-    event_dict = {"event": msg}
-
-    event = processor(logger, method_name, event_dict)
-
-    dd_keys = {"dd.env", "dd.service", "dd.version"}
-    event_dd_keys = event.keys() & dd_keys
-
-    if should_be_enabled:
-        assert event_dd_keys == dd_keys
-    else:
-        assert event_dd_keys == set()
+    assert processor is expected
