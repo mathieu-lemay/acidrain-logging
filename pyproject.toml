@@ -8,7 +8,7 @@ readme = "README.md"
 include = ["acidrain_logging/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<4.0"
 orjson = "^3.9.6"
 pydantic = "^2.5.3"
 pydantic-settings = "^2.2.0"
@@ -24,10 +24,9 @@ uvicorn = { version = "^0.34.0", optional = true }
 # extra=flask
 flask = { version = "^3.0.0", optional = true }
 
-# extra=datadog
-datadog = { version = "^0.50.2", optional = true }
-ddtrace = { version = "^2.4.0", optional = true }
-importlib-metadata = "^8.0.0"
+# extra=otel
+opentelemetry-api = {version = "^1.29.0", optional = true}
+opentelemetry-sdk = {version = "^1.29.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -44,12 +43,13 @@ pytz = "^2024.1"
 setuptools = "^75.6.0"  # HACK: Needed for PyCharm
 types-pytz = "^2024.1.0.20240203"
 uwsgi = "^2.0.22"
+opentelemetry-distro = "^0.50b0"
 
 [tool.poetry.extras]
 celery = ["celery"]
-datadog = ["datadog", "ddtrace"]
 fastapi = ["fastapi", "uvicorn"]
 flask = ["flask"]
+otel = ["opentelemetry-api", "opentelemetry-sdk"]
 
 [tool.coverage.report]
 exclude_lines = [
