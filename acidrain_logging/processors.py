@@ -93,6 +93,9 @@ def otel_processor(
     # - Test without otel
     # - Test with otel but no tracing / invalid span
     # - Test with otel
+
+    # To run with agent:
+    #   https://opentelemetry.io/docs/zero-code/python/#configuring-the-agent
     span = trace and trace.get_current_span()
     if not span:
         return event_dict
@@ -101,11 +104,13 @@ def otel_processor(
     if not ctx.is_valid:
         return event_dict
 
-    event_dict.update({
-        "otel.span_name": getattr(span, "name", None),
-        "otel.span_id": trace.format_span_id(ctx.span_id),
-        "otel.trace_id": trace.format_trace_id(ctx.trace_id),
-    })
+    event_dict.update(
+        {
+            "otel.span_name": getattr(span, "name", None),
+            "otel.span_id": trace.format_span_id(ctx.span_id),
+            "otel.trace_id": trace.format_trace_id(ctx.trace_id),
+        }
+    )
 
     return event_dict
 
