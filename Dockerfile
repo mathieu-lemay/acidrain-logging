@@ -1,4 +1,4 @@
-FROM acidrain/python-poetry:3.10-alpine AS build
+FROM acidrain/python-poetry:3.11-alpine AS build
 
 RUN apk add gcc libc-dev linux-headers
 
@@ -10,7 +10,7 @@ RUN set -eu; \
     poetry install --all-extras --no-root
 
 
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 USER nobody
 WORKDIR /app

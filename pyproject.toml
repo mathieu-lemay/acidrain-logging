@@ -8,7 +8,7 @@ readme = "README.md"
 include = ["acidrain_logging/py.typed"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.11,<3.13"
 orjson = "^3.9.6"
 pydantic = "^2.5.3"
 pydantic-settings = "^2.2.0"
