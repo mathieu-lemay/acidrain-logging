@@ -5,13 +5,13 @@ from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 
 from acidrain_logging import LogConfig
-from acidrain_logging.config import DatadogSettings
+from acidrain_logging.config import OtelSettings
 
 EmptyDictFactory: Use[Any, dict[Any, Any]] = Use(dict)
 
 
-class DatadogSettingsFactory(ModelFactory[DatadogSettings]):
-    __model__ = DatadogSettings
+class OtelSettingsFactory(ModelFactory[OtelSettings]):
+    __model__ = OtelSettings
 
 
 class LogConfigFactory(ModelFactory[LogConfig]):
@@ -26,4 +26,4 @@ class LogConfigFactory(ModelFactory[LogConfig]):
     # TODO: check if needed
     timestamp_key = "timestamp"
     timestamp_fmt = "iso"
-    datadog = DatadogSettingsFactory
+    otel = OtelSettingsFactory

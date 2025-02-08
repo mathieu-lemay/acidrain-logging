@@ -1,5 +1,4 @@
 from unittest.mock import Mock, patch
-from uuid import uuid4
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -10,7 +9,7 @@ from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.fastapi import middlewares
-from acidrain_logging.testing.factories import LogConfigFactory
+from acidrain_logging.testing.factories import LogConfigFactory, OtelSettingsFactory
 from acidrain_logging.testing.fastapi import create_app
 
 
@@ -18,7 +17,10 @@ from acidrain_logging.testing.fastapi import create_app
 def log_config() -> LogConfig:
     logger_levels = {"httpx": "ERROR"}
     return LogConfigFactory.build(
-        output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels
+        output_format=OutputFormat.CONSOLE,
+        level="INFO",
+        logger_levels=logger_levels,
+        otel=OtelSettingsFactory.build(injection_enabled=True),
     )
 
 
@@ -52,34 +54,35 @@ def test_context_reset_middleware(
 def test_trace_id_middleware_adds_trace_id_when_no_header(
     api_client: TestClient, caplog: LogCaptureFixture
 ) -> None:
-    trace_id = uuid4()
-
-    with patch(f"{middlewares.__name__}.uuid4") as uuid4_mock:
-        uuid4_mock.return_value = trace_id
-        resp = api_client.get("/")
+    resp = api_client.get("/")
 
     assert resp.is_success
+    assert "X-Trace-Id" in resp.headers
+
+    trace_id = resp.headers["X-Trace-Id"]
 
     assert len(caplog.records) == 1
 
     log_values = caplog.records[0].msg
     assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
+    assert log_values["otel.trace_id"] == str(trace_id)
 
 
 def test_trace_id_middleware_re_uses_trace_id_from_headers(
     api_client: TestClient, caplog: LogCaptureFixture, faker: Faker
 ) -> None:
-    trace_id = faker.pystr()
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
 
-    resp = api_client.get("/", headers={"x-trace-id": trace_id})
+    resp = api_client.get("/", headers={"traceparent": f"00-{trace_id}-{span_id}-01"})
     assert resp.is_success
+    assert resp.headers["X-Trace-Id"] == trace_id
 
     assert len(caplog.records) == 1
 
     log_values = caplog.records[0].msg
     assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
+    assert log_values["otel.trace_id"] == trace_id
 
 
 @patch(f"{middlewares.__name__}.time")

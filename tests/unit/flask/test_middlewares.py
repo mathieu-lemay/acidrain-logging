@@ -61,6 +61,7 @@ def test_trace_id_middleware_adds_trace_id_when_no_header(
         resp = api_client.get("/")
 
     assert resp.status_code == HTTPStatus.OK
+    assert resp.headers["X-Trace-Id"] == str(trace_id)
 
     assert len(caplog.records) == 1
 
