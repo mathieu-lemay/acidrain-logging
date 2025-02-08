@@ -25,8 +25,9 @@ uvicorn = { version = "^0.34.0", optional = true }
 flask = { version = "^3.0.0", optional = true }
 
 # extra=otel
-opentelemetry-api = {version = "^1.29.0", optional = true}
-opentelemetry-sdk = {version = "^1.29.0", optional = true}
+opentelemetry-api = { version = "^1.29.0", optional = true }
+opentelemetry-sdk = { version = "^1.29.0", optional = true }
+opentelemetry-exporter-otlp-proto-grpc = { version = "^1.29.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -43,13 +44,12 @@ pytz = "^2024.1"
 setuptools = "^75.6.0"  # HACK: Needed for PyCharm
 types-pytz = "^2024.1.0.20240203"
 uwsgi = "^2.0.22"
-opentelemetry-distro = "^0.50b0"
 
 [tool.poetry.extras]
 celery = ["celery"]
 fastapi = ["fastapi", "uvicorn"]
 flask = ["flask"]
-otel = ["opentelemetry-api", "opentelemetry-sdk"]
+otel = ["opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp-proto-grpc"]
 
 [tool.coverage.report]
 exclude_lines = [

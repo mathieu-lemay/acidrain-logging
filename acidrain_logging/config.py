@@ -21,15 +21,6 @@ class InvalidLogLevelError(Exception):
         super().__init__(f"Invalid log level: {value}")
 
 
-class OtelSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="otel_")
-
-    injection_enabled: bool = True
-
-    def is_enabled(self) -> bool:
-        return self.injection_enabled
-
-
 class LogConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="acidrain_log_", env_ignore_empty=True)
 
@@ -39,8 +30,7 @@ class LogConfig(BaseSettings):
     logger_levels: Annotated[dict[str, str], Field(default_factory=dict)]
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
-
-    otel: OtelSettings = Field(default_factory=OtelSettings)
+    trace_injection_enabled: bool = True
 
     @field_validator("level")
     def validate_log_level(cls, value: str) -> str:
@@ -52,3 +42,19 @@ class LogConfig(BaseSettings):
             raise InvalidLogLevelError(value)
 
         return sanitized
+
+
+class TraceExporter(str, Enum):
+    __slots__ = ()
+
+    CONSOLE = "console"
+    OTLP = "otlp"
+    NONE = "none"
+
+
+class TracingConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="acidrain_trace_", env_ignore_empty=True
+    )
+
+    exporter: TraceExporter = TraceExporter.OTLP

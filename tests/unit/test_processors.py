@@ -9,7 +9,6 @@ from opentelemetry.trace import Span, SpanContext, format_span_id, format_trace_
 from structlog.processors import TimeStamper
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import OtelSettings
 from acidrain_logging.processors import (
     LogProcessor,
     drop_color_message_key,
@@ -142,16 +141,16 @@ def test_otel_injector_adds_the_span_values_if_there_is_one(
 
 
 @pytest.mark.parametrize(
-    ("otel_enabled", "expected"),
+    ("trace_injection_enabled", "expected"),
     [
         (False, null_processor),
         (True, otel_processor),
     ],
 )
 def test_otel_processor_builder_returns_the_right_processor(
-    otel_enabled: bool, expected: LogProcessor
+    trace_injection_enabled: bool, expected: LogProcessor
 ) -> None:
-    config = LogConfig(otel=OtelSettings(injection_enabled=otel_enabled))
+    config = LogConfig(trace_injection_enabled=trace_injection_enabled)
     processor = otel_processor_builder(config)
 
     assert processor is expected

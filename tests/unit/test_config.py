@@ -2,7 +2,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import InvalidLogLevelError, OtelSettings
+from acidrain_logging.config import InvalidLogLevelError
 
 
 def test_log_config(monkeypatch: MonkeyPatch) -> None:
@@ -13,6 +13,7 @@ def test_log_config(monkeypatch: MonkeyPatch) -> None:
         ctx.setenv("ACIDRAIN_LOG_LOGGER_LEVELS", '{"foo.bar": "error"}')
         ctx.setenv("ACIDRAIN_LOG_TIMESTAMP_FORMAT", "%m/%d/%Y")  # derp format
         ctx.setenv("ACIDRAIN_LOG_TIMESTAMP_KEY", "asctime")
+        ctx.setenv("ACIDRAIN_LOG_TRACE_INJECTION_ENABLED", "false")
 
         config = LogConfig()
 
@@ -22,6 +23,7 @@ def test_log_config(monkeypatch: MonkeyPatch) -> None:
     assert config.logger_levels == {"foo.bar": "error"}
     assert config.timestamp_format == "%m/%d/%Y"
     assert config.timestamp_key == "asctime"
+    assert config.trace_injection_enabled is False
 
 
 def test_log_config_default_values() -> None:
@@ -33,6 +35,7 @@ def test_log_config_default_values() -> None:
     assert config.logger_levels == {}
     assert config.timestamp_format == "iso"
     assert config.timestamp_key == "timestamp"
+    assert config.trace_injection_enabled is True
 
 
 @pytest.mark.parametrize(
@@ -82,7 +85,5 @@ def test_log_config_logger_levels_can_be_an_empty_string(
     assert config.logger_levels == {}
 
 
-def test_otel_settings_default_values() -> None:
-    s = OtelSettings()
-
-    assert s.injection_enabled is True
+def test_tracing_config() -> None:
+    pytest.fail("TODO")

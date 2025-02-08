@@ -9,7 +9,7 @@ from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.fastapi import middlewares
-from acidrain_logging.testing.factories import LogConfigFactory, OtelSettingsFactory
+from acidrain_logging.testing.factories import LogConfigFactory
 from acidrain_logging.testing.fastapi import create_app
 
 
@@ -20,7 +20,6 @@ def log_config() -> LogConfig:
         output_format=OutputFormat.CONSOLE,
         level="INFO",
         logger_levels=logger_levels,
-        otel=OtelSettingsFactory.build(injection_enabled=True),
     )
 
 

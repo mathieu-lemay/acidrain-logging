@@ -116,7 +116,7 @@ def otel_processor(
 
 
 def otel_processor_builder(config: LogConfig) -> LogProcessor:
-    if not config.otel.is_enabled():
+    if not config.trace_injection_enabled:
         return null_processor
 
     return otel_processor
