@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -5,11 +6,17 @@ from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import SpanKind
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
+from acidrain_logging.config import TraceExporter, TracingConfig
 from acidrain_logging.fastapi import middlewares
-from acidrain_logging.testing.factories import LogConfigFactory
+from acidrain_logging.testing.factories import LogConfigFactory, TracingConfigFactory
 from acidrain_logging.testing.fastapi import create_app
 
 
@@ -24,8 +31,27 @@ def log_config() -> LogConfig:
 
 
 @pytest.fixture(scope="module")
-def api_app(log_config: LogConfig) -> FastAPI:
-    return create_app(log_config)
+def tracing_config() -> TracingConfig:
+    return TracingConfigFactory.build(exporter=TraceExporter.NONE)
+
+
+@pytest.fixture(scope="module")
+def span_exporter() -> InMemorySpanExporter:
+    return InMemorySpanExporter()
+
+
+@pytest.fixture(scope="module")
+def api_app(
+    log_config: LogConfig,
+    tracing_config: TracingConfig,
+    span_exporter: InMemorySpanExporter,
+) -> FastAPI:
+    app = create_app(log_config=log_config, tracing_config=tracing_config)
+
+    tp = cast(TracerProvider, trace.get_tracer_provider())
+    tp.add_span_processor(SimpleSpanProcessor(span_exporter))
+
+    return app
 
 
 @pytest.fixture
@@ -82,6 +108,40 @@ def test_trace_id_middleware_re_uses_trace_id_from_headers(
     log_values = caplog.records[0].msg
     assert isinstance(log_values, dict)  # type check
     assert log_values["otel.trace_id"] == trace_id
+
+
+def test_trace_id_middleware_creates_a_span_for_the_request(
+    api_client: TestClient, span_exporter: InMemorySpanExporter
+) -> None:
+    span_exporter.clear()
+
+    resp = api_client.get("/")
+    assert resp.is_success
+
+    trace_id = resp.headers["X-Trace-Id"]
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "API Request"
+    assert span.kind == SpanKind.SERVER
+    assert span.context.is_valid
+    assert span.context.trace_id == int(trace_id, 16)
+
+
+def test_trace_id_middleware_sets_span_to_success_when_request_succeeds(
+    api_client: TestClient,  # noqa: ARG001
+    span_exporter: InMemorySpanExporter,  # noqa: ARG001
+) -> None:
+    pytest.fail("TODO")
+
+
+def test_trace_id_middleware_sets_span_to_error_when_request_fails(
+    api_client: TestClient,  # noqa: ARG001
+    span_exporter: InMemorySpanExporter,  # noqa: ARG001
+) -> None:
+    pytest.fail("TODO")
 
 
 @patch(f"{middlewares.__name__}.time")

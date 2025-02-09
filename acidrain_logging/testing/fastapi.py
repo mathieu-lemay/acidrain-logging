@@ -12,6 +12,8 @@ from acidrain_logging.fastapi.middlewares import add_log_middlewares
 if TYPE_CHECKING:
     from structlog.stdlib import BoundLogger
 
+    from acidrain_logging.config import TracingConfig
+
 app = FastAPI()
 
 log: BoundLogger = structlog.get_logger()
@@ -35,10 +37,10 @@ def get_value(
     return Result()
 
 
-def create_app(log_config: LogConfig | None = None) -> FastAPI:
-    log_config = log_config or LogConfig()
-
-    configure_tracing()
+def create_app(
+    *, log_config: LogConfig | None = None, tracing_config: TracingConfig | None = None
+) -> FastAPI:
+    configure_tracing(tracing_config)
     configure_logger(log_config)
     add_log_middlewares(app)
 

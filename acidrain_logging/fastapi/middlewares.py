@@ -38,6 +38,7 @@ class TraceIdMiddleware(BaseHTTPMiddleware):
             ctx = span.get_span_context()
             trace_id = trace.format_trace_id(ctx.trace_id)
 
+            # TODO: Set span to error if request fails
             resp = await call_next(request)
 
             resp.headers["X-Trace-Id"] = trace_id
