@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 import pytest
@@ -26,20 +27,21 @@ def _celery_worker(docker_services: Services, docker_logs: DockerLogs) -> None:
 async def test_celery_logs_the_startup_banner(docker_logs: DockerLogs) -> None:
     worker_logs = (docker_logs("worker")).split("\n")
 
+    entry: dict[str, Any] | None = None
+
     for entry in map(json.loads, filter(None, reversed(worker_logs))):
-        if entry["message"].startswith("Celery Startup"):
+        if entry and entry["message"].startswith("Celery Startup"):
             break
     else:  # pragma: no cover
         pytest.fail("Could not find startup banner")
+
+    assert entry
 
     # Ensure the banner was logged properly by checking for some keys
     assert "[config]" in entry["message"]
     assert "[queues]" in entry["message"]
 
     # Ensure metadata
-    assert entry["dd.env"] == "testing"
-    assert entry["dd.service"] == "test-api"
-    assert entry["dd.version"] == "0.0.0-dev"
     assert datetime.strptime(  # noqa: DTZ007: Timezone is irrelevant
         entry["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
     )
@@ -62,6 +64,7 @@ async def test_task_logging_includes_task_id_and_trace_id(
         entry
         for entry in map(json.loads, filter(None, worker_logs.split("\n")))
         if entry["logger"].startswith("acidrain_logging.")
+        # and entry["message"].startswith("Running dummy task")
     ]
 
     assert len(log_entries) == 3
@@ -71,10 +74,13 @@ async def test_task_logging_includes_task_id_and_trace_id(
     assert UUID(task_id)
     assert {e["task"]["id"] for e in log_entries} == {task_id}
 
-    # Ensure all logs have the same trace id and that it is a valid uuid
-    trace_id = log_entries[0]["trace_id"]
-    assert UUID(trace_id)
-    assert {e["trace_id"] for e in log_entries} == {trace_id}
+    # Ensure all logs have the same trace id
+    trace_id = log_entries[0]["otel.trace_id"]
+    assert {e["otel.trace_id"] for e in log_entries} == {trace_id}
+
+    # Ensure all logs have the same span id
+    span_id = log_entries[0]["otel.span_id"]
+    assert {e["otel.span_id"] for e in log_entries} == {span_id}
 
 
 @pytest.mark.usefixtures("_celery_worker")  # ensure the worker is up and running

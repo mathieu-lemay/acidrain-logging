@@ -6,6 +6,7 @@ services:
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: 8000
       OTEL_SERVICE_NAME: "test-fastapi"
+      ACIDRAIN_TRACE_EXPORTER: "none"
     ports:
       - 8000
   flask:
@@ -22,10 +23,8 @@ services:
     build: ".."
     command: ["celery", "-A", "acidrain_logging.testing.celery", "--quiet", "worker"]
     environment:
-      DD_ENV: "testing"
-      DD_SERVICE: "test-api"
-      DD_VERSION: "0.0.0-dev"
-      DD_TRACE_ENABLED: true
+      OTEL_SERVICE_NAME: "test-celery"
+      ACIDRAIN_TRACE_EXPORTER: "none"
     user: nobody
     tmpfs:
       - /var/run/celery

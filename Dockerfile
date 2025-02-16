@@ -1,13 +1,14 @@
 FROM acidrain/python-poetry:3.11-alpine AS build
 
-RUN apk add gcc libc-dev linux-headers
+RUN apk add gcc libc-dev linux-headers;
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 
-RUN set -eu; \
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    set -eu; \
     poetry config virtualenvs.in-project true; \
-    poetry install --all-extras --no-root
+    poetry install --all-extras --no-root;
 
 
 FROM python:3.11-alpine
