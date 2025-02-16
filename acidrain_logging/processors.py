@@ -11,7 +11,7 @@ from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.config import DatadogSettings
 
 try:
-    from ddtrace import tracer
+    from ddtrace.trace import tracer
 except ImportError:  # pragma: no cover
     tracer = None  # type: ignore[assignment]
 
