@@ -38,16 +38,17 @@ def test_null_processor_returns_the_event_dict_untouched(faker: Faker) -> None:
 
 
 @pytest.mark.parametrize(
-    ("output_format", "expected_key"),
+    ("output_format", "expected_key", "expected_utc"),
     [
-        (OutputFormat.CONSOLE, lambda _: "timestamp"),
-        (OutputFormat.JSON, lambda c: c.timestamp_key),
+        (OutputFormat.CONSOLE, lambda _: "timestamp", False),
+        (OutputFormat.JSON, lambda c: c.timestamp_key, True),
     ],
 )
 def test_timestamper_builder_creates_a_timestamper_from_config(
     faker: Faker,
     output_format: OutputFormat,
     expected_key: Callable[[LogConfig], str],
+    expected_utc: bool,
 ) -> None:
     config = LogConfig(
         output_format=output_format,
@@ -60,7 +61,7 @@ def test_timestamper_builder_creates_a_timestamper_from_config(
     assert isinstance(processor, TimeStamper)
     assert processor.fmt == config.timestamp_format
     assert processor.key == expected_key(config)
-    assert processor.utc is True
+    assert processor.utc is expected_utc
 
 
 def test_event_renamer_renames_event_to_message(faker: Faker) -> None:

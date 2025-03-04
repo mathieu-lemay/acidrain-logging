@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import structlog
 from fastapi import FastAPI, Path, Query
@@ -28,9 +28,9 @@ def root() -> Result:
 
 @app.get("/value/{key1}/{key2}")
 def get_value(
-    _key1: str = Path(alias="key1"),
-    _key2: str = Path(alias="key2"),
-    _default: str = Query(alias="default"),
+    _key1: Annotated[str, Path(alias="key1")],
+    _key2: Annotated[str, Path(alias="key2")],
+    _default: Annotated[str, Query(alias="default")],
 ) -> Result:
     return Result()
 

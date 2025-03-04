@@ -1,6 +1,5 @@
 import json
 import re
-from builtins import reversed
 from datetime import UTC, datetime
 from uuid import UUID
 
