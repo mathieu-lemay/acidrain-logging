@@ -12,7 +12,7 @@ python = "^3.11"
 orjson = "^3.9.6"
 pydantic = "^2.5.3"
 pydantic-settings = "^2.2.0"
-structlog = "^24.1.0"
+structlog = "^25.1.0"
 
 # extra=celery
 celery = { version = "^5.2.7", extras = ["redis"], optional = true }
@@ -25,24 +25,24 @@ uvicorn = { version = "^0.34.0", optional = true }
 flask = { version = "^3.0.0", optional = true }
 
 # extra=datadog
-datadog = { version = "^0.50.2", optional = true }
-ddtrace = { version = "^2.4.0", optional = true }
+datadog = { version = "^0.51.0", optional = true }
+ddtrace = { version = "^3.2.1", optional = true }
 importlib-metadata = "^8.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 pytest-cov = "^6.0.0"
 mypy = "^1.4.1"
-celery-types = "^0.22.0"
-faker = "^33.1.0"
+celery-types = "^0.23.0"
+faker = "^37.0.0"
 httpx = "^0.28.1"
 polyfactory = "^2.9.0"
 pytest-asyncio = "^0.25.0"
 pytest-docker = "^3.1.1"
 pytest-freezer = "^0.4.8"
-pytz = "^2024.1"
+pytz = "^2025.1"
 setuptools = "^75.6.0"  # HACK: Needed for PyCharm
-types-pytz = "^2024.1.0.20240203"
+types-pytz = "^2025.1.0.20250204"
 uwsgi = "^2.0.22"
 
 [tool.poetry.extras]
