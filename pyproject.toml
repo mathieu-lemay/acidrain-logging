@@ -37,11 +37,11 @@ celery-types = "^0.23.0"
 faker = "^37.0.0"
 httpx = "^0.28.1"
 polyfactory = "^2.9.0"
-pytest-asyncio = "^0.25.0"
+pytest-asyncio = "^0.26.0"
 pytest-docker = "^3.1.1"
 pytest-freezer = "^0.4.8"
 pytz = "^2025.1"
-setuptools = "^75.6.0"  # HACK: Needed for PyCharm
+setuptools = "^17.0.1"  # HACK: Needed for PyCharm
 types-pytz = "^2025.1.0.20250204"
 uwsgi = "^2.0.22"
 
