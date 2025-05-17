@@ -203,10 +203,10 @@ def find_log_record(
     def _find_record() -> dict[str, Any] | None:
         return next(
             (
-                cast(dict[str, Any], r.msg)
+                cast("dict[str, Any]", r.msg)
                 for r in caplog.records
                 if msg in r.message
-                and cast(dict[str, Any], r.msg)["task"]["id"] == task_id
+                and cast("dict[str, Any]", r.msg)["task"]["id"] == task_id
             ),
             None,
         )

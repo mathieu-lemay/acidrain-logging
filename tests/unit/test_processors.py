@@ -156,7 +156,7 @@ def test_datadog_injector_adds_the_span_values_if_there_is_one(
     ],
 )
 @patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_builder_returns_the_right_processor(  # noqa: PLR0913: too many args
+def test_datadog_injector_builder_returns_the_right_processor(
     faker: Faker,
     dd_enabled: bool,
     dd_env: str,

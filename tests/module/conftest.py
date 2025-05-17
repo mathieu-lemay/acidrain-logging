@@ -39,7 +39,7 @@ class DockerLogs:
             cmd += ["--since", since.isoformat()]
         cmd.append(service)
 
-        return cast(bytes, self.executor.execute(" ".join(cmd))).decode().strip()
+        return cast("bytes", self.executor.execute(" ".join(cmd))).decode().strip()
 
 
 @pytest.fixture(scope="session")

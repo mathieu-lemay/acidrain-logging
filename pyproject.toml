@@ -27,7 +27,7 @@ flask = { version = "^3.0.0", optional = true }
 # extra=datadog
 datadog = { version = "^0.51.0", optional = true }
 ddtrace = { version = "^3.2.1", optional = true }
-importlib-metadata = "^8.0.0"
+importlib-metadata = "^8.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -41,7 +41,7 @@ pytest-asyncio = "^0.26.0"
 pytest-docker = "^3.1.1"
 pytest-freezer = "^0.4.8"
 pytz = "^2025.1"
-setuptools = "^79.0.1"  # HACK: Needed for PyCharm
+setuptools = "^80.7.1"  # HACK: Needed for PyCharm
 types-pytz = "^2025.1.0.20250204"
 uwsgi = "^2.0.22"
 
@@ -116,6 +116,7 @@ classmethod-decorators = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
     "FBT001", # Boolean-typed positional argument in function definition
+    "PLR0913", # Too many arguments in function definition
     "PLR2004", # Magic value used in comparison
     "S101", # Use of `assert` detected
     "S105", # Possible hardcoded password

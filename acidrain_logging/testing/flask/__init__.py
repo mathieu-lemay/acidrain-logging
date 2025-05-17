@@ -23,7 +23,7 @@ def root() -> str:
 
 # Decorator is untyped
 @app.route("/value/<key1>/<key2>")
-def get_value(key1: str, key2: str) -> str:  # noqa: ARG001: Unused args are on purpose
+def get_value(key1: str, key2: str) -> str:  # noqa: ARG001 -> Unused args are on purpose
     return Result().model_dump_json()
 
 
