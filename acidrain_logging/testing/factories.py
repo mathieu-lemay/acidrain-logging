@@ -5,7 +5,7 @@ from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 
 from acidrain_logging import LogConfig
-from acidrain_logging.config import DatadogSettings
+from acidrain_logging.config import DatadogSettings, OtelConfig
 
 EmptyDictFactory: Use[Any, dict[Any, Any]] = Use(dict)
 
@@ -26,4 +26,8 @@ class LogConfigFactory(ModelFactory[LogConfig]):
     # TODO: check if needed
     timestamp_key = "timestamp"
     timestamp_fmt = "iso"
-    datadog = DatadogSettingsFactory
+    trace_injection_enabled = True
+
+
+class OtelConfigFactory(ModelFactory[OtelConfig]):
+    __model__ = OtelConfig

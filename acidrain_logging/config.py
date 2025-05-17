@@ -42,6 +42,7 @@ class LogConfig(BaseSettings):
     logger_levels: Annotated[dict[str, str], Field(default_factory=dict)]
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
+    trace_injection_enabled: bool = True
 
     datadog: DatadogSettings = Field(default_factory=DatadogSettings)
 
@@ -55,3 +56,19 @@ class LogConfig(BaseSettings):
             raise InvalidLogLevelError(value)
 
         return sanitized
+
+
+class TraceExporter(str, Enum):
+    __slots__ = ()
+
+    CONSOLE = "console"
+    OTLP = "otlp"
+    NONE = "none"
+
+
+class OtelConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="acidrain_otel_", env_ignore_empty=True
+    )
+
+    trace_exporter: TraceExporter = TraceExporter.OTLP
