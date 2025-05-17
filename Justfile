@@ -8,7 +8,7 @@ test:
         --verbosity=1
 
 install:
-    poetry install --sync --all-extras
+    poetry sync --all-extras
 
 update: _poetry_lock install
 
