@@ -25,6 +25,7 @@ otel = [
     "opentelemetry-api (>=1.33.1,<2.0.0)",
     "opentelemetry-sdk (>=1.33.1,<2.0.0)",
     "opentelemetry-exporter-otlp-proto-grpc (>=1.33.1,<2.0.0)",
+    "opentelemetry-instrumentation-celery (>=0.54b1,<0.55)",
 ]
 
 [tool.poetry]
@@ -46,6 +47,7 @@ pytz = "^2025.1"
 setuptools = "^80.7.1"  # HACK: Needed for PyCharm
 types-pytz = "^2025.1.0.20250204"
 uwsgi = "^2.0.22"
+tenacity = "^9.1.2"
 
 [tool.coverage.report]
 exclude_lines = [
@@ -103,10 +105,8 @@ ignore = [
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = [
     "classmethod",
-    "pydantic.validator",
     "pydantic.field_validator",
     "pydantic.model_validator",
-    "pydantic.root_validator"
 ]
 
 [tool.ruff.lint.per-file-ignores]
