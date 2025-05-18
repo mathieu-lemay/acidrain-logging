@@ -52,6 +52,22 @@ test = ["anyio[trio]", "blockbuster (>=1.5.23)", "coverage[toml] (>=7)", "except
 trio = ["trio (>=0.26.1)"]
 
 [[package]]
+name = "asgiref"
+version = "3.8.1"
+description = "ASGI specs, helper code, and adapters"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
+]
+
+[package.extras]
+tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
+
+[[package]]
 name = "async-timeout"
 version = "5.0.1"
 description = "Timeout context manager for asyncio programs"
@@ -1181,6 +1197,29 @@ packaging = ">=18.0"
 wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
+name = "opentelemetry-instrumentation-asgi"
+version = "0.54b1"
+description = "ASGI instrumentation for OpenTelemetry"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "opentelemetry_instrumentation_asgi-0.54b1-py3-none-any.whl", hash = "sha256:84674e822b89af563b283a5283c2ebb9ed585d1b80a1c27fb3ac20b562e9f9fc"},
+    {file = "opentelemetry_instrumentation_asgi-0.54b1.tar.gz", hash = "sha256:ab4df9776b5f6d56a78413c2e8bbe44c90694c67c844a1297865dc1bd926ed3c"},
+]
+
+[package.dependencies]
+asgiref = ">=3.0,<4.0"
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.54b1"
+opentelemetry-semantic-conventions = "0.54b1"
+opentelemetry-util-http = "0.54b1"
+
+[package.extras]
+instruments = ["asgiref (>=3.0,<4.0)"]
+
+[[package]]
 name = "opentelemetry-instrumentation-celery"
 version = "0.54b1"
 description = "OpenTelemetry Celery Instrumentation"
@@ -1200,6 +1239,29 @@ opentelemetry-semantic-conventions = "0.54b1"
 
 [package.extras]
 instruments = ["celery (>=4.0,<6.0)"]
+
+[[package]]
+name = "opentelemetry-instrumentation-fastapi"
+version = "0.54b1"
+description = "OpenTelemetry FastAPI Instrumentation"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "opentelemetry_instrumentation_fastapi-0.54b1-py3-none-any.whl", hash = "sha256:fb247781cfa75fd09d3d8713c65e4a02bd1e869b00e2c322cc516d4b5429860c"},
+    {file = "opentelemetry_instrumentation_fastapi-0.54b1.tar.gz", hash = "sha256:1fcad19cef0db7092339b571a59e6f3045c9b58b7fd4670183f7addc459d78df"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.54b1"
+opentelemetry-instrumentation-asgi = "0.54b1"
+opentelemetry-semantic-conventions = "0.54b1"
+opentelemetry-util-http = "0.54b1"
+
+[package.extras]
+instruments = ["fastapi (>=0.58,<1.0)"]
 
 [[package]]
 name = "opentelemetry-proto"
@@ -1251,6 +1313,19 @@ files = [
 [package.dependencies]
 deprecated = ">=1.2.6"
 opentelemetry-api = "1.33.1"
+
+[[package]]
+name = "opentelemetry-util-http"
+version = "0.54b1"
+description = "Web util for OpenTelemetry"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "opentelemetry_util_http-0.54b1-py3-none-any.whl", hash = "sha256:b1c91883f980344a1c3c486cffd47ae5c9c1dd7323f9cbe9fdb7cadb401c87c9"},
+    {file = "opentelemetry_util_http-0.54b1.tar.gz", hash = "sha256:f0b66868c19fbaf9c9d4e11f4a7599fa15d5ea50b884967a26ccd9d72c7c9d15"},
+]
 
 [[package]]
 name = "orjson"
@@ -2160,9 +2235,9 @@ celery = ["celery"]
 datadog = ["datadog", "ddtrace"]
 fastapi = ["fastapi", "uvicorn"]
 flask = ["flask"]
-otel = ["opentelemetry-api", "opentelemetry-exporter-otlp-proto-grpc", "opentelemetry-instrumentation-celery", "opentelemetry-sdk"]
+otel = ["opentelemetry-api", "opentelemetry-exporter-otlp-proto-grpc", "opentelemetry-instrumentation-celery", "opentelemetry-instrumentation-fastapi", "opentelemetry-sdk"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "6123ebc24acd5ca24c4a03e6fe4e0da8c68545215ba364169429601d3831b155"
+content-hash = "eab28178c121047bc0e965a88d4314f15a65411f12b1f80c898921510c91a0c3"

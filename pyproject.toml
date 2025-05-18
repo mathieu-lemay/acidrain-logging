@@ -26,6 +26,7 @@ otel = [
     "opentelemetry-sdk (>=1.33.1,<2.0.0)",
     "opentelemetry-exporter-otlp-proto-grpc (>=1.33.1,<2.0.0)",
     "opentelemetry-instrumentation-celery (>=0.54b1,<0.55)",
+    "opentelemetry-instrumentation-fastapi (>=0.54b1,<0.55)",
 ]
 
 [tool.poetry]

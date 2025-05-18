@@ -6,6 +6,8 @@ from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
@@ -80,6 +82,46 @@ def test_trace_id_middleware_re_uses_trace_id_from_headers(
     log_values = caplog.records[0].msg
     assert isinstance(log_values, dict)  # type check
     assert log_values["trace_id"] == str(trace_id)
+
+
+def test_otel_instrumentation_adds_trace_id_when_no_header(
+    api_client: TestClient,
+    span_exporter: InMemorySpanExporter,
+    caplog: LogCaptureFixture,
+) -> None:
+    resp = api_client.get("/")
+    assert resp.is_success
+
+    assert len(caplog.records) == 1
+
+    span = next(
+        (s for s in span_exporter.get_finished_spans() if s.name == "GET /"), None
+    )
+    assert span is not None
+
+    log_values = caplog.records[0].msg
+    assert isinstance(log_values, dict)  # type check
+    assert log_values["otel.trace_id"] == trace.format_trace_id(span.context.trace_id)
+
+
+def test_otel_instrumentation_re_uses_trace_id_from_headers(
+    api_client: TestClient, span_exporter: InMemorySpanExporter, faker: Faker
+) -> None:
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
+
+    resp = api_client.get("/", headers={"traceparent": f"00-{trace_id}-{span_id}-01"})
+    assert resp.is_success
+
+    span = next(
+        (s for s in span_exporter.get_finished_spans() if s.name == "GET /"), None
+    )
+    assert span is not None
+    assert trace.format_trace_id(span.context.trace_id) == trace_id
+
+    # The exported span should have our injected span_id as its parent
+    assert span.parent is not None
+    assert trace.format_span_id(span.parent.span_id) == span_id
 
 
 @patch(f"{middlewares.__name__}.time")

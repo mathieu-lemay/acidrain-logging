@@ -2,11 +2,13 @@ import json
 import socket
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import ANY
 from urllib.parse import urlparse
 
 import httpx
 import pytest
+import tenacity
 from httpx import AsyncClient, RequestError
 from pytest_docker.plugin import Services
 
@@ -56,6 +58,39 @@ async def test_api_logging_uses_structlog(docker_logs: DockerLogs) -> None:
     assert datetime.strptime(  # noqa: DTZ007 -> Timezone is irrelevant
         entry["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
     )
+
+
+async def test_api_logging_uses_otel(
+    api_client: AsyncClient, docker_logs: DockerLogs
+) -> None:
+    timestamp = datetime.now(tz=UTC)
+
+    resp = await api_client.get("/")
+    assert resp.is_success
+
+    api_logs = (docker_logs("fastapi", since=timestamp)).split("\n")
+    assert len(api_logs) == 1
+    entry = json.loads(api_logs[0])
+
+    assert "otel.trace_id" in entry
+    assert "otel.span_id" in entry
+
+    def get_exported_spans() -> list[dict[str, Any]]:
+        logs = docker_logs("fastapi", since=timestamp)
+
+        return [
+            e
+            for e in map(json.loads, filter(None, logs.split("\n")))
+            if "kind" in e and e["kind"].startswith("SpanKind.")
+        ]
+
+    log_entries = tenacity.retry(
+        stop=tenacity.stop_after_delay(15),
+        retry=tenacity.retry_if_result(lambda x: x == []),
+    )(get_exported_spans)()
+
+    assert len(log_entries) > 0
+    assert log_entries[0]["resource"]["attributes"]["service.name"] == "test-fastapi"
 
 
 async def test_request_logging_includes_all_metadata(
