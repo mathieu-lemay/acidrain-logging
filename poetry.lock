@@ -1264,6 +1264,49 @@ opentelemetry-util-http = "0.54b1"
 instruments = ["fastapi (>=0.58,<1.0)"]
 
 [[package]]
+name = "opentelemetry-instrumentation-flask"
+version = "0.54b1"
+description = "Flask instrumentation for OpenTelemetry"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "opentelemetry_instrumentation_flask-0.54b1-py3-none-any.whl", hash = "sha256:1f9d44b8ca9bc7d52e2aeb539bc64a88d6fc04f2f67c1ffb278148c99cc8ec6a"},
+    {file = "opentelemetry_instrumentation_flask-0.54b1.tar.gz", hash = "sha256:683f9963f06d065fc07ceaffa106df1f6f20075318530328f69fde39dfb1192f"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.54b1"
+opentelemetry-instrumentation-wsgi = "0.54b1"
+opentelemetry-semantic-conventions = "0.54b1"
+opentelemetry-util-http = "0.54b1"
+packaging = ">=21.0"
+
+[package.extras]
+instruments = ["flask (>=1.0)"]
+
+[[package]]
+name = "opentelemetry-instrumentation-wsgi"
+version = "0.54b1"
+description = "WSGI Middleware for OpenTelemetry"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"otel\""
+files = [
+    {file = "opentelemetry_instrumentation_wsgi-0.54b1-py3-none-any.whl", hash = "sha256:6d99dca32ce232251cd321bf86e8c9d0a60c5f088bcbe5ad55d12a2006fe056e"},
+    {file = "opentelemetry_instrumentation_wsgi-0.54b1.tar.gz", hash = "sha256:261ad737e0058812aaae6bb7d6e0fa7344de62464c5df30c82bea180e735b903"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-instrumentation = "0.54b1"
+opentelemetry-semantic-conventions = "0.54b1"
+opentelemetry-util-http = "0.54b1"
+
+[[package]]
 name = "opentelemetry-proto"
 version = "1.33.1"
 description = "OpenTelemetry Python Proto"
@@ -2235,9 +2278,9 @@ celery = ["celery"]
 datadog = ["datadog", "ddtrace"]
 fastapi = ["fastapi", "uvicorn"]
 flask = ["flask"]
-otel = ["opentelemetry-api", "opentelemetry-exporter-otlp-proto-grpc", "opentelemetry-instrumentation-celery", "opentelemetry-instrumentation-fastapi", "opentelemetry-sdk"]
+otel = ["opentelemetry-api", "opentelemetry-exporter-otlp-proto-grpc", "opentelemetry-instrumentation-celery", "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-flask", "opentelemetry-sdk"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "eab28178c121047bc0e965a88d4314f15a65411f12b1f80c898921510c91a0c3"
+content-hash = "b0dfe721d4d826d2c86373307d65eb0d668dc0683a7b7fa86fd51b9d49d65a39"
