@@ -129,7 +129,7 @@ def test_trace_id_is_propagated_to_all_task_logs(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    if current_trace_id:
+    if current_trace_id:  # noqa: SIM108  # Use binary operator. The intent is clearer with an explicit if / else
         expected_trace_id = current_trace_id
     else:
         # This validates that the record includes a trace id and that it's a valid UUID
