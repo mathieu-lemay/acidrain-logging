@@ -42,6 +42,7 @@ class LogConfig(BaseSettings):
     logger_levels: Annotated[dict[str, str], Field(default_factory=dict)]
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
+    level_names: Annotated[dict[str, str], Field(default_factory=dict)]
 
     datadog: DatadogSettings = Field(default_factory=DatadogSettings)
 

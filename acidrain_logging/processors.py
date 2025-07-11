@@ -74,6 +74,33 @@ def event_renamer_builder(config: LogConfig) -> LogProcessor:
 EventRenamerFactory = LogProcessorFactory(builder=event_renamer_builder)
 
 
+# https://github.com/hynek/structlog/issues/35#issuecomment-591321744
+def level_renamer(
+    level_names: dict[str, str], _logger: Logger, _method_name: str, event_dict: EventDict
+) -> EventDict:
+    """
+    Rename `event` key to `message`.
+
+    Log entries keep the text message in the `event` field, but Datadog
+    uses the `message` field. This processor moves the value from one field to
+    the other.
+    See https://github.com/hynek/structlog/issues/35#issuecomment-591321744
+    """
+    level = event_dict["level"]
+    event_dict["level"] = level_names.get(level, level)
+    return event_dict
+
+
+def level_renamer_builder(config: LogConfig) -> LogProcessor:
+    if not config.level_names:
+        return null_processor
+
+    return partial(level_renamer, config.level_names)
+
+
+LevelRenamerFactory = LogProcessorFactory(builder=event_renamer_builder)
+
+
 def drop_color_message_key(
     _logger: Logger, _method_name: str, event_dict: EventDict
 ) -> EventDict:
@@ -130,5 +157,6 @@ SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.processors.StackInfoRenderer(),
     drop_color_message_key,
     EventRenamerFactory,
+    LevelRenamerFactory,
     DatadogInjectorFactory,
 ]
