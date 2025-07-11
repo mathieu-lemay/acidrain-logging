@@ -101,7 +101,7 @@ def level_renamer_builder(config: LogConfig) -> LogProcessor:
     return partial(level_renamer, config.level_names)
 
 
-LevelRenamerFactory = LogProcessorFactory(builder=event_renamer_builder)
+LevelRenamerFactory = LogProcessorFactory(builder=level_renamer_builder)
 
 
 def drop_color_message_key(
