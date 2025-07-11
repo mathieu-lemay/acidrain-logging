@@ -76,7 +76,10 @@ EventRenamerFactory = LogProcessorFactory(builder=event_renamer_builder)
 
 # https://github.com/hynek/structlog/issues/35#issuecomment-591321744
 def level_renamer(
-    level_names: dict[str, str], _logger: Logger, _method_name: str, event_dict: EventDict
+    level_names: dict[str, str],
+    _logger: Logger,
+    _method_name: str,
+    event_dict: EventDict,
 ) -> EventDict:
     """
     Rename `event` key to `message`.
