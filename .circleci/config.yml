@@ -20,9 +20,9 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: Restore Poetry cache
+          name: Restore uv cache
           keys:
-            - venv-v1-{{ checksum "poetry.lock" }}
+            - venv-v1-{{ checksum "uv.lock" }}
             - venv-v1-
             - venv-
       - restore_cache:
@@ -32,8 +32,8 @@ jobs:
             - pre-commit-v1-
             - pre-commit-
       - run:
-          name: Install poetry and pre-commit
-          command: pip3 install poetry pre-commit
+          name: Install uv and pre-commit
+          command: pip3 install uv pre-commit
       - run:
           name: Install project dependencies
           command: make install
@@ -48,10 +48,10 @@ jobs:
       - store_test_results:
           path: test-results
       - save_cache:
-          name: Save Poetry cache
-          key: venv-v1-{{ checksum "poetry.lock" }}
+          name: Save uv cache
+          key: venv-v1-{{ checksum "uv.lock" }}
           paths:
-            - "~/.cache/pypoetry/virtualenvs"
+            - "~/.cache/uv"
       - save_cache:
           name: Save pre-commit cache
           key: pre-commit-v1-{{ checksum ".pre-commit-config.yaml" }}

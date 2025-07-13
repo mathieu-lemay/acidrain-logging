@@ -2,15 +2,15 @@ lint:
     pre-commit run --all-files
 
 test:
-    poetry run pytest \
+    uv run pytest \
         --cov --cov-fail-under 100 \
         --cov-report=term-missing:skip-covered \
         --verbosity=1
 
 install:
-    poetry sync --all-extras
+    uv sync --all-extras
 
-update: _poetry_lock install
+update: _uv_lock install
 
-_poetry_lock:
-    poetry update --lock
+_uv_lock:
+    uv lock --upgrade

@@ -1,8 +1,17 @@
+# Python-generated files
 __pycache__/
-.pytest_cache
 *.py[cod]
-.coverage*
+build/
 dist/
+wheels/
+*.egg-info
 
+# Tools
+.coverage*
+.mypy_cache
+.pytest_cache
+.ruff_cache
+
+# IDE files
 .idea
 .vscode
