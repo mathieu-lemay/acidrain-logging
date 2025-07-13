@@ -1,0 +1,18 @@
+{
+  "template": "git@github.com:mathieu-lemay/python-project-template.git",
+  "commit": "154f012820f844982ea02c2adde8c6610e816712",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_slug": "acidrain-logging",
+      "project_description": "A logging configuration library",
+      "module_name": "acidrain_logging",
+      "python_version": ">=3.11,<4",
+      "target_version": "py311",
+      "license": "MIT",
+      "_template": "git@github.com:mathieu-lemay/python-project-template.git",
+      "_commit": "154f012820f844982ea02c2adde8c6610e816712"
+    }
+  },
+  "directory": null
+}
