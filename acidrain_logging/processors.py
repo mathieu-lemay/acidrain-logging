@@ -18,15 +18,11 @@ except ImportError:  # pragma: no cover
 LogProcessor = Callable[[Logger, str, EventDict], EventDict]
 
 
-def null_processor(_: Logger, __: str, event_dict: EventDict) -> EventDict:
-    return event_dict
-
-
 @dataclass
 class LogProcessorFactory:
-    builder: Callable[[LogConfig], LogProcessor]
+    builder: Callable[[LogConfig], LogProcessor | None]
 
-    def __call__(self, config: LogConfig) -> LogProcessor:
+    def __call__(self, config: LogConfig) -> LogProcessor | None:
         return self.builder(config)
 
 
@@ -64,9 +60,9 @@ def event_renamer(
     return event_dict
 
 
-def event_renamer_builder(config: LogConfig) -> LogProcessor:
+def event_renamer_builder(config: LogConfig) -> LogProcessor | None:
     if config.output_format != OutputFormat.JSON:
-        return null_processor
+        return None
 
     return event_renamer
 
@@ -109,9 +105,9 @@ def datadog_injector(
     return event_dict
 
 
-def datadog_injector_builder(config: LogConfig) -> LogProcessor:
+def datadog_injector_builder(config: LogConfig) -> LogProcessor | None:
     if not config.datadog.is_enabled():
-        return null_processor
+        return None
 
     return partial(datadog_injector, datadog_settings=config.datadog)
 

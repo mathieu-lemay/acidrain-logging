@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from copy import deepcopy
 from logging import Logger
 from unittest.mock import Mock, patch
 
@@ -15,26 +14,9 @@ from acidrain_logging.processors import (
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
-    null_processor,
     timestamper_builder,
 )
 from acidrain_logging.testing.factories import DatadogSettingsFactory
-
-
-def test_null_processor_returns_the_event_dict_untouched(faker: Faker) -> None:
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-
-    key1, key2, value1, value2 = (faker.pystr() for _ in range(4))
-
-    event_dict = {
-        key1: value1,
-        key2: value2,
-    }
-
-    expected = deepcopy(event_dict)
-
-    assert null_processor(logger, method_name, event_dict) == expected
 
 
 @pytest.mark.parametrize(
@@ -75,17 +57,20 @@ def test_event_renamer_renames_event_to_message(faker: Faker) -> None:
 
 
 @pytest.mark.parametrize(
-    ("output_format", "expected_key"),
+    ("output_format", "should_be_enabled"),
     [
-        (OutputFormat.CONSOLE, "event"),
-        (OutputFormat.JSON, "message"),
+        (OutputFormat.CONSOLE, False),
+        (OutputFormat.JSON, True),
     ],
 )
 def test_event_renamer_builder_returns_the_right_processor(
-    faker: Faker, output_format: OutputFormat, expected_key: str
+    faker: Faker, output_format: OutputFormat, should_be_enabled: bool
 ) -> None:
     config = LogConfig(output_format=output_format)
     processor = event_renamer_builder(config)
+    if not should_be_enabled:
+        assert processor is None
+        return
 
     logger = Mock(Logger)
     method_name = faker.pystr()
@@ -93,7 +78,8 @@ def test_event_renamer_builder_returns_the_right_processor(
 
     event_dict = {"event": msg}
 
-    assert processor(logger, method_name, event_dict) == {expected_key: msg}
+    assert processor is not None
+    assert processor(logger, method_name, event_dict) == {"message": msg}
 
 
 def test_drop_color_message_key_drops_the_color_message(faker: Faker) -> None:
@@ -174,18 +160,20 @@ def test_datadog_injector_builder_returns_the_right_processor(
     )
     processor = datadog_injector_builder(config)
 
+    if not should_be_enabled:
+        assert processor is None
+        return
+
     logger = Mock(Logger)
     method_name = faker.pystr()
     msg = faker.pystr()
 
     event_dict = {"event": msg}
 
+    assert processor is not None
     event = processor(logger, method_name, event_dict)
 
     dd_keys = {"dd.env", "dd.service", "dd.version"}
     event_dd_keys = event.keys() & dd_keys
 
-    if should_be_enabled:
-        assert event_dd_keys == dd_keys
-    else:
-        assert event_dd_keys == set()
+    assert event_dd_keys == dd_keys
