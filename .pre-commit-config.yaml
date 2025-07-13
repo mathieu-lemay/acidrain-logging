@@ -27,4 +27,4 @@ repos:
         name: mypy
         pass_filenames: false
         language: system
-        entry: poetry run mypy .
+        entry: uv run mypy .

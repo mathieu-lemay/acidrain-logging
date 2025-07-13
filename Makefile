@@ -5,15 +5,15 @@ lint: .PHONY
 	pre-commit run --all-files
 
 test: .PHONY
-	poetry run pytest \
+	uv run pytest \
 		--cov --cov-fail-under 100 \
 		--cov-report=term-missing:skip-covered \
 		--verbosity=1
 
 install: .PHONY
-	poetry sync --all-extras
+	uv sync --all-extras
 
-update: poetry.lock install
+update: uv.lock install
 
-poetry.lock: .PHONY
-	poetry update --lock
+uv.lock: .PHONY
+	uv lock --upgrade

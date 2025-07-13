@@ -1,4 +1,4 @@
-FROM acidrain/python-poetry:3.11-alpine AS build
+FROM python:3.11-alpine AS build
 
 RUN apk add gcc libc-dev linux-headers uv;
 
