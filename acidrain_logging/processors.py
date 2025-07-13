@@ -70,6 +70,34 @@ def event_renamer_builder(config: LogConfig) -> LogProcessor | None:
 EventRenamerFactory = LogProcessorFactory(builder=event_renamer_builder)
 
 
+class LevelRenamer:
+    """
+    Rename level according to mapping.
+
+    Levels that are not mapped are kept intact.
+    """
+
+    def __init__(self, rename_map: dict[str, str]) -> None:
+        self._rename_map = rename_map
+
+    def __call__(
+        self, _logger: Logger, _method_name: str, event_dict: EventDict
+    ) -> EventDict:
+        level = event_dict["level"]
+        event_dict["level"] = self._rename_map.get(level, level)
+        return event_dict
+
+
+def level_renamer_builder(config: LogConfig) -> LogProcessor | None:
+    if not config.level_names:
+        return None
+
+    return LevelRenamer(config.level_names)
+
+
+LevelRenamerFactory = LogProcessorFactory(builder=level_renamer_builder)
+
+
 def drop_color_message_key(
     _logger: Logger, _method_name: str, event_dict: EventDict
 ) -> EventDict:
@@ -126,5 +154,6 @@ SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.processors.StackInfoRenderer(),
     drop_color_message_key,
     EventRenamerFactory,
+    LevelRenamerFactory,
     DatadogInjectorFactory,
 ]

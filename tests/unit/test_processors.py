@@ -9,11 +9,13 @@ from structlog.processors import TimeStamper
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.config import DatadogSettings
 from acidrain_logging.processors import (
+    LevelRenamer,
     datadog_injector,
     datadog_injector_builder,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
+    level_renamer_builder,
     timestamper_builder,
 )
 from acidrain_logging.testing.factories import DatadogSettingsFactory
@@ -80,6 +82,57 @@ def test_event_renamer_builder_returns_the_right_processor(
 
     assert processor is not None
     assert processor(logger, method_name, event_dict) == {"message": msg}
+
+
+def test_level_renamer_renames_level(faker: Faker) -> None:
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+
+    info_rename = faker.pystr()
+    warning_rename = faker.pystr()
+
+    rename_map = {
+        "info": info_rename,
+        "warning": warning_rename,
+        faker.pystr(): "info",  # Invalid level name, will be ignored
+    }
+    level_renamer = LevelRenamer(rename_map)
+
+    assert level_renamer(logger, method_name, {"level": "info"}) == {
+        "level": info_rename
+    }
+    assert level_renamer(logger, method_name, {"level": "warning"}) == {
+        "level": warning_rename
+    }
+    assert level_renamer(logger, method_name, {"level": "unmapped-level"}) == {
+        "level": "unmapped-level"
+    }
+
+
+@pytest.mark.parametrize(
+    ("rename_map", "should_be_enabled"),
+    [
+        (None, False),
+        ({}, False),
+        ({"info": "ofni"}, True),
+    ],
+)
+def test_level_renamer_builder_returns_the_right_processor(
+    faker: Faker, rename_map: dict[str, str] | None, should_be_enabled: bool
+) -> None:
+    config = LogConfig(level_names=rename_map)
+    processor = level_renamer_builder(config)
+    if not should_be_enabled:
+        assert processor is None
+        return
+
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+
+    level_dict = {"level": "info"}
+
+    assert processor is not None
+    assert processor(logger, method_name, level_dict) == {"level": "ofni"}
 
 
 def test_drop_color_message_key_drops_the_color_message(faker: Faker) -> None:
