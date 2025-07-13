@@ -1,6 +1,6 @@
 {
   "template": "git@github.com:mathieu-lemay/python-project-template.git",
-  "commit": "154f012820f844982ea02c2adde8c6610e816712",
+  "commit": "9e95406438adec08724d6a602429b53f48f6b849",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -11,7 +11,7 @@
       "target_version": "py311",
       "license": "MIT",
       "_template": "git@github.com:mathieu-lemay/python-project-template.git",
-      "_commit": "154f012820f844982ea02c2adde8c6610e816712"
+      "_commit": "9e95406438adec08724d6a602429b53f48f6b849"
     }
   },
   "directory": null

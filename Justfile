@@ -8,7 +8,7 @@ test:
         --verbosity=1
 
 install:
-    uv sync
+    uv sync --all-extras
 
 update: _uv_lock install
 
