@@ -4,18 +4,27 @@ from unittest.mock import Mock, patch
 
 import pytest
 from faker import Faker
+from opentelemetry.trace import (
+    Span,
+    SpanContext,
+    format_span_id,
+    format_trace_id,
+)
 from structlog.processors import TimeStamper
 
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.config import DatadogSettings
 from acidrain_logging.processors import (
     LevelRenamer,
+    LogProcessor,
     datadog_injector,
     datadog_injector_builder,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
     level_renamer_builder,
+    otel_processor,
+    otel_processor_builder,
     timestamper_builder,
 )
 from acidrain_logging.testing.factories import DatadogSettingsFactory
@@ -230,3 +239,82 @@ def test_datadog_injector_builder_returns_the_right_processor(
     event_dd_keys = event.keys() & dd_keys
 
     assert event_dd_keys == dd_keys
+
+
+@patch("acidrain_logging.processors.trace")
+def test_otel_injector_adds_the_span_values_if_there_is_one(
+    mock_trace: Mock, faker: Faker
+) -> None:
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+
+    span_name = faker.pystr()
+    span_id = faker.pyint()
+    trace_id = faker.pyint()
+
+    mock_span_ctx = Mock(
+        spec=SpanContext, span_id=span_id, trace_id=trace_id, is_valid=True
+    )
+
+    mock_span = Mock(spec=Span)
+    mock_span.name = span_name
+    mock_span.get_span_context.return_value = mock_span_ctx
+
+    mock_trace.get_current_span.return_value = mock_span
+    mock_trace.format_span_id = format_span_id
+    mock_trace.format_trace_id = format_trace_id
+
+    event_dict = otel_processor(logger, method_name, {})
+
+    assert event_dict["otel.span_name"] == span_name
+    assert event_dict["otel.span_id"] == format_span_id(span_id)
+    assert event_dict["otel.trace_id"] == format_trace_id(trace_id)
+
+
+@patch("acidrain_logging.processors.trace", new=None)
+def test_otel_injector_does_nothing_if_otel_is_not_installed(faker: Faker) -> None:
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+
+    event_dict = otel_processor(logger, method_name, {})
+
+    assert not any(k for k in event_dict if k.startswith("otel."))
+
+
+@patch("acidrain_logging.processors.trace")
+@pytest.mark.parametrize(
+    "span",
+    [
+        None,
+        Mock(spec=Span, get_span_context=lambda: Mock(is_valid=False)),
+    ],
+)
+def test_otel_injector_does_nothing_if_span_is_invalid(
+    mock_trace: Mock,
+    faker: Faker,
+    span: Span,
+) -> None:
+    logger = Mock(Logger)
+    method_name = faker.pystr()
+
+    mock_trace.get_current_span.return_value = span
+
+    event_dict = otel_processor(logger, method_name, {})
+
+    assert not any(k for k in event_dict if k.startswith("otel."))
+
+
+@pytest.mark.parametrize(
+    ("trace_injection_enabled", "expected"),
+    [
+        (False, None),
+        (True, otel_processor),
+    ],
+)
+def test_otel_processor_builder_returns_the_right_processor(
+    trace_injection_enabled: bool, expected: LogProcessor | None
+) -> None:
+    config = LogConfig(trace_injection_enabled=trace_injection_enabled)
+    processor = otel_processor_builder(config)
+
+    assert processor is expected
