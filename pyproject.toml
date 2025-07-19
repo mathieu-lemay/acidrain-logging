@@ -37,7 +37,6 @@ dev = [
 
 [project.optional-dependencies]
 celery = ["celery[redis] (>=5.2.7,<6.0.0)"]
-datadog = ["datadog (>=0.52.2,<0.53.0)", "ddtrace (>=4.10.5,<5.0.0)"]
 fastapi = ["fastapi (>=0.138.1,<0.139.0)", "uvicorn (>=0.49.0,<0.50.0)"]
 flask = ["flask (>=3.0.0,<4.0.0)"]
 otel = [

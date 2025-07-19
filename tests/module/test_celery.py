@@ -38,9 +38,6 @@ async def test_celery_logs_the_startup_banner(docker_logs: DockerLogs) -> None:
     assert "[queues]" in entry["message"]
 
     # Ensure metadata
-    assert entry["dd.env"] == "testing"
-    assert entry["dd.service"] == "test-api"
-    assert entry["dd.version"] == "0.0.0-dev"
     assert datetime.strptime(  # noqa: DTZ007 -> Timezone is irrelevant
         entry["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
     )

@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from functools import partial
 from logging import Logger
 from typing import Any
 
@@ -8,12 +7,6 @@ import structlog
 from structlog.typing import EventDict
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import DatadogSettings
-
-try:
-    from ddtrace.trace import tracer
-except ImportError:  # pragma: no cover
-    tracer = None  # type: ignore[assignment]
 
 try:
     from opentelemetry import trace
@@ -34,7 +27,6 @@ class LogProcessorFactory:
 def timestamper_builder(config: LogConfig) -> LogProcessor:
     kwargs: dict[str, Any] = {}
 
-    # TODO: Check if needed for DD logs
     if config.output_format == OutputFormat.JSON:
         kwargs["key"] = config.timestamp_key
     else:
@@ -115,38 +107,6 @@ def drop_color_message_key(
     return event_dict
 
 
-def datadog_injector(
-    _logger: Logger,
-    _method_name: str,
-    event_dict: EventDict,
-    *,
-    datadog_settings: DatadogSettings,
-) -> EventDict:
-    event_dict.update(
-        {
-            "dd.env": datadog_settings.env,
-            "dd.service": datadog_settings.service,
-            "dd.version": datadog_settings.version,
-        }
-    )
-
-    span = tracer and tracer.current_span()
-    if span:
-        event_dict.update({"dd.span_id": span.span_id, "dd.trace_id": span.trace_id})
-
-    return event_dict
-
-
-def datadog_injector_builder(config: LogConfig) -> LogProcessor | None:
-    if not config.datadog.is_enabled():
-        return None
-
-    return partial(datadog_injector, datadog_settings=config.datadog)
-
-
-DatadogInjectorFactory = LogProcessorFactory(builder=datadog_injector_builder)
-
-
 def otel_processor(
     _logger: Logger,
     _method_name: str,
@@ -193,6 +153,5 @@ SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     drop_color_message_key,
     EventRenamerFactory,
     LevelRenamerFactory,
-    DatadogInjectorFactory,
     OtelInjectorFactory,
 ]

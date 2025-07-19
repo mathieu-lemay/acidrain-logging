@@ -13,12 +13,9 @@ from opentelemetry.trace import (
 from structlog.processors import TimeStamper
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import DatadogSettings
 from acidrain_logging.processors import (
     LevelRenamer,
     LogProcessor,
-    datadog_injector,
-    datadog_injector_builder,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
@@ -27,7 +24,6 @@ from acidrain_logging.processors import (
     otel_processor_builder,
     timestamper_builder,
 )
-from acidrain_logging.testing.factories import DatadogSettingsFactory
 
 
 @pytest.mark.parametrize(
@@ -156,89 +152,6 @@ def test_drop_color_message_key_drops_the_color_message(faker: Faker) -> None:
         key1: value1,
         key2: value2,
     }
-
-
-@patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_adds_the_datadog_values(faker: Faker) -> None:
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-
-    dd_settings: DatadogSettings = DatadogSettingsFactory.build()
-
-    assert datadog_injector(logger, method_name, {}, datadog_settings=dd_settings) == {
-        "dd.env": dd_settings.env,
-        "dd.service": dd_settings.service,
-        "dd.version": dd_settings.version,
-    }
-
-
-@patch("acidrain_logging.processors.tracer")
-def test_datadog_injector_adds_the_span_values_if_there_is_one(
-    mock_tracer: Mock, faker: Faker
-) -> None:
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-
-    span_id = faker.pystr()
-    trace_id = faker.pystr()
-    mock_tracer.current_span.return_value = Mock(span_id=span_id, trace_id=trace_id)
-
-    event_dict = datadog_injector(
-        logger, method_name, {}, datadog_settings=DatadogSettingsFactory.build()
-    )
-
-    assert event_dict["dd.span_id"] == span_id
-    assert event_dict["dd.trace_id"] == trace_id
-
-
-@pytest.mark.parametrize(
-    ("dd_enabled", "dd_env", "dd_service", "dd_version", "should_be_enabled"),
-    [
-        (False, "", "", "", False),
-        (False, "some-env", "some-service", "some-version", False),
-        (True, "", "", "", False),
-        (True, "some-env", "", "", True),
-        (True, "", "some-service", "", True),
-        (True, "", "", "some-version", True),
-        (True, "some-env", "some-service", "some-version", True),
-    ],
-)
-@patch("acidrain_logging.processors.tracer", new=None)
-def test_datadog_injector_builder_returns_the_right_processor(
-    faker: Faker,
-    dd_enabled: bool,
-    dd_env: str,
-    dd_service: str,
-    dd_version: str,
-    should_be_enabled: bool,
-) -> None:
-    config = LogConfig(
-        datadog=DatadogSettings(
-            injection_enabled=dd_enabled,
-            env=dd_env,
-            service=dd_service,
-            version=dd_version,
-        )
-    )
-    processor = datadog_injector_builder(config)
-
-    if not should_be_enabled:
-        assert processor is None
-        return
-
-    logger = Mock(Logger)
-    method_name = faker.pystr()
-    msg = faker.pystr()
-
-    event_dict = {"event": msg}
-
-    assert processor is not None
-    event = processor(logger, method_name, event_dict)
-
-    dd_keys = {"dd.env", "dd.service", "dd.version"}
-    event_dd_keys = event.keys() & dd_keys
-
-    assert event_dd_keys == dd_keys
 
 
 @patch("acidrain_logging.processors.trace")
