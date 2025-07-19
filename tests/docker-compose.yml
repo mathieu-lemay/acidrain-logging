@@ -21,6 +21,8 @@ services:
       DD_SERVICE: "test-flask"
       DD_VERSION: "0.0.0-dev"
       DD_TRACE_ENABLED: true
+      OTEL_SERVICE_NAME: "test-flask"
+      ACIDRAIN_OTEL_TRACE_EXPORTER: "console"
     ports:
       - 8000
   worker:

@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import structlog
 from flask import Flask, Response, g, request
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from structlog.stdlib import BoundLogger
 from werkzeug.wrappers import Request
@@ -83,8 +84,10 @@ def _log_request(response: Response) -> Response:
 
 
 def add_log_middlewares(app: Flask) -> None:
+    FlaskInstrumentor().instrument_app(app)  # type: ignore[no-untyped-call]
+
     for cls in reversed((ResetContextMiddleware, TraceIdMiddleware)):
-        # Types are fine and assigning to a method is what we _must_ do here.
+        # Types are fine, and assigning to a method is what we _must_ do here.
         app.wsgi_app = cls(app.wsgi_app)  # type: ignore[assignment, method-assign]
 
     app.before_request(_inject_start_time)

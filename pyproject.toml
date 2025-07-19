@@ -46,6 +46,7 @@ otel = [
     "opentelemetry-exporter-otlp-proto-grpc (>=1.33.1,<2.0.0)",
     "opentelemetry-instrumentation-celery (>=0.56b0,<0.57)",
     "opentelemetry-instrumentation-fastapi (>=0.56b0,<0.57)",
+    "opentelemetry-instrumentation-flask (>=0.56b0,<0.57)",
 ]
 
 [tool.coverage.report]
