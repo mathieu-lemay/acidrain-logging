@@ -9,6 +9,8 @@ services:
       DD_TRACE_ENABLED: true
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: 8000
+      OTEL_SERVICE_NAME: "test-fastapi"
+      ACIDRAIN_OTEL_TRACE_EXPORTER: "console"
     ports:
       - 8000
   flask:

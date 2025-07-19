@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import structlog
 from fastapi import FastAPI
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -80,3 +81,4 @@ def add_log_middlewares(app: FastAPI) -> None:
     app.add_middleware(LogRequestMiddleware)
     app.add_middleware(TraceIdMiddleware)
     app.add_middleware(ContextResetMiddleware)
+    FastAPIInstrumentor.instrument_app(app)

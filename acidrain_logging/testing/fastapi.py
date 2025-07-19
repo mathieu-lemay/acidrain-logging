@@ -6,7 +6,8 @@ import structlog
 from fastapi import FastAPI, Path, Query
 from pydantic import BaseModel
 
-from acidrain_logging import LogConfig, configure_logger
+from acidrain_logging import LogConfig, configure_logger, configure_tracing
+from acidrain_logging.config import OtelConfig
 from acidrain_logging.fastapi.middlewares import add_log_middlewares
 
 if TYPE_CHECKING:
@@ -35,10 +36,15 @@ def get_value(
     return Result()
 
 
-def create_app(log_config: LogConfig | None = None) -> FastAPI:
+def create_app(
+    log_config: LogConfig | None = None, otel_config: OtelConfig | None = None
+) -> FastAPI:
     log_config = log_config or LogConfig()
+    otel_config = otel_config or OtelConfig()
 
     configure_logger(log_config)
+    configure_tracing(otel_config)
+
     add_log_middlewares(app)
 
     return app
