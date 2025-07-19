@@ -1,9 +1,10 @@
 import json
 import re
 from datetime import UTC, datetime
-from uuid import UUID
+from typing import Any
 
 import pytest
+import tenacity
 from pytest_docker.plugin import (
     DockerComposeExecutor,
     Services,
@@ -27,7 +28,7 @@ async def test_celery_logs_the_startup_banner(docker_logs: DockerLogs) -> None:
     worker_logs = (docker_logs("worker")).split("\n")
 
     for entry in map(json.loads, filter(None, reversed(worker_logs))):
-        if entry["message"].startswith("Celery Startup"):
+        if "message" in entry and entry["message"].startswith("Celery Startup"):
             break
     else:  # pragma: no cover
         pytest.fail("Could not find startup banner")
@@ -46,7 +47,7 @@ async def test_celery_logs_the_startup_banner(docker_logs: DockerLogs) -> None:
 
 
 @pytest.mark.usefixtures("_celery_worker")  # ensure the worker is up and running
-async def test_task_logging_includes_task_id_and_trace_id(
+async def test_task_logging_uses_otel(
     docker_logs: DockerLogs, docker_compose_executor: DockerComposeExecutor
 ) -> None:
     timestamp = datetime.now(tz=UTC)
@@ -57,24 +58,39 @@ async def test_task_logging_includes_task_id_and_trace_id(
     )
     docker_compose_executor.execute(f"exec worker sh -c \"python -c '{python_cmd}'\"")
 
-    worker_logs = docker_logs("worker", since=timestamp)
-    log_entries = [
-        entry
-        for entry in map(json.loads, filter(None, worker_logs.split("\n")))
-        if entry["logger"].startswith("acidrain_logging.")
-    ]
+    worker_logs = docker_logs("worker", since=timestamp).split("\n")
 
-    assert len(log_entries) == 3
+    assert len(worker_logs) >= 1
 
-    # Ensure all logs have the same task id and that it is a valid uuid
-    task_id = log_entries[0]["task"]["id"]
-    assert UUID(task_id)
-    assert {e["task"]["id"] for e in log_entries} == {task_id}
+    entry = next(
+        (
+            e
+            for e in map(json.loads, worker_logs)
+            if "logger" in e and e["logger"].startswith("acidrain_logging.")
+        ),
+        None,
+    )
 
-    # Ensure all logs have the same trace id and that it is a valid uuid
-    trace_id = log_entries[0]["trace_id"]
-    assert UUID(trace_id)
-    assert {e["trace_id"] for e in log_entries} == {trace_id}
+    assert entry is not None
+    assert "otel.trace_id" in entry
+    assert "otel.span_id" in entry
+
+    def get_exported_spans() -> list[dict[str, Any]]:
+        logs = docker_logs("worker", since=timestamp)
+
+        return [
+            e
+            for e in map(json.loads, filter(None, logs.split("\n")))
+            if "kind" in e and e["kind"].startswith("SpanKind.")
+        ]
+
+    log_entries = tenacity.retry(
+        stop=tenacity.stop_after_delay(15),
+        retry=tenacity.retry_if_result(lambda x: x == []),
+    )(get_exported_spans)()
+
+    assert len(log_entries) > 0
+    assert log_entries[0]["resource"]["attributes"]["service.name"] == "test-celery"
 
 
 @pytest.mark.usefixtures("_celery_worker")  # ensure the worker is up and running
@@ -93,7 +109,8 @@ async def test_task_start_log_includes_publish_tm(
     log_entries = [
         entry
         for entry in map(json.loads, filter(None, worker_logs.split("\n")))
-        if entry["message"].startswith("Received task")
+        if "logger" in entry
+        and entry["message"].startswith("Received task")
         and entry["logger"].startswith("acidrain_logging.")
     ]
 

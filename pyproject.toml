@@ -29,7 +29,8 @@ dev = [
     "pytest-docker>=3.2.3",
     "pytest-freezer>=0.4.9",
     "pytz>=2025.2",
-    "setuptools>=80.9.0",  # HACK: Needed for PyCharm
+    "setuptools>=80.9.0", # HACK: Needed for PyCharm
+    "tenacity>=9.1.2",
     "types-pytz>=2025.2.0.20250516",
     "uwsgi>=2.0.30",
 ]
@@ -43,6 +44,7 @@ otel = [
     "opentelemetry-api (>=1.33.1,<2.0.0)",
     "opentelemetry-sdk (>=1.33.1,<2.0.0)",
     "opentelemetry-exporter-otlp-proto-grpc (>=1.33.1,<2.0.0)",
+    "opentelemetry-instrumentation-celery (>=0.56b0,<0.57)",
 ]
 
 [tool.coverage.report]
