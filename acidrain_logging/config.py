@@ -21,18 +21,6 @@ class InvalidLogLevelError(Exception):
         super().__init__(f"Invalid log level: {value}")
 
 
-class DatadogSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="dd_")
-
-    injection_enabled: bool = True
-    env: str = ""
-    service: str = ""
-    version: str = ""
-
-    def is_enabled(self) -> bool:
-        return self.injection_enabled and any((self.env, self.service, self.version))
-
-
 class LogConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="acidrain_log_", env_ignore_empty=True)
 
@@ -44,8 +32,6 @@ class LogConfig(BaseSettings):
     timestamp_key: str = "timestamp"
     level_names: dict[str, str] | None = None
     trace_injection_enabled: bool = True
-
-    datadog: DatadogSettings = Field(default_factory=DatadogSettings)
 
     @field_validator("level")
     def validate_log_level(cls, value: str) -> str:
