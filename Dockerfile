@@ -5,8 +5,9 @@ RUN apk add gcc libc-dev linux-headers uv;
 WORKDIR /app
 COPY pyproject.toml uv.lock /app/
 
-RUN set -eu; \
-    uv sync --all-extras --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    set -eu; \
+    uv sync --all-extras --no-install-project;
 
 
 FROM python:3.13-alpine
