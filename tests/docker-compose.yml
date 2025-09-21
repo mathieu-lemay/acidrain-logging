@@ -1,6 +1,7 @@
 services:
   fastapi:
     build: ".."
+    image: "acidrain-logging:dev"
     command: ["uvicorn", "--factory", "acidrain_logging.testing.fastapi:create_app"]
     environment:
       DD_ENV: "testing"
@@ -13,6 +14,7 @@ services:
       - 8000
   flask:
     build: ".."
+    image: "acidrain-logging:dev"
     command: ["uwsgi", "--http", ":8000", "--logger-req", "file:/dev/null", "--wsgi", "acidrain_logging.testing.flask.main:app"]
     environment:
       DD_ENV: "testing"
@@ -23,6 +25,7 @@ services:
       - 8000
   worker:
     build: ".."
+    image: "acidrain-logging:dev"
     command: ["celery", "-A", "acidrain_logging.testing.celery", "--quiet", "worker"]
     environment:
       DD_ENV: "testing"
