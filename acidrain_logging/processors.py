@@ -112,6 +112,8 @@ def otel_processor(
     _method_name: str,
     event_dict: EventDict,
 ) -> EventDict:
+    # To run with agent:
+    #   https://opentelemetry.io/docs/zero-code/python/#configuring-the-agent
     span = trace and trace.get_current_span()
     if not span:
         return event_dict
