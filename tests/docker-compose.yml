@@ -15,7 +15,7 @@ services:
   flask:
     build: ".."
     image: "acidrain-logging:dev"
-    command: ["uwsgi", "--http", ":8000", "--logger-req", "file:/dev/null", "--wsgi", "acidrain_logging.testing.flask.main:app"]
+    command: ["gunicorn", "--bind", ":8000", "acidrain_logging.testing.flask.main:app"]
     environment:
       DD_ENV: "testing"
       DD_SERVICE: "test-flask"

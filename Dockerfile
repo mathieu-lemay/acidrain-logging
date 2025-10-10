@@ -1,4 +1,4 @@
-FROM python:3.11-alpine AS build
+FROM python:3.13-alpine AS build
 
 RUN apk add gcc libc-dev linux-headers uv;
 
@@ -9,7 +9,7 @@ RUN set -eu; \
     uv sync --all-extras --no-install-project
 
 
-FROM python:3.11-alpine
+FROM python:3.13-alpine
 
 USER nobody
 WORKDIR /app

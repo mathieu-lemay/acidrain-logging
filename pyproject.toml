@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "celery-types>=0.23.0",
     "faker>=37.4.0",
+    "gunicorn>=23.0.0",
     "httpx>=0.28.1",
     "mypy>=1.16.1",
     "polyfactory>=2.22.0",
@@ -29,9 +30,8 @@ dev = [
     "pytest-docker>=3.2.3",
     "pytest-freezer>=0.4.9",
     "pytz>=2025.2",
-    "setuptools>=80.9.0",  # HACK: Needed for PyCharm
+    "setuptools>=80.9.0", # HACK: Needed for PyCharm
     "types-pytz>=2025.2.0.20250516",
-    "uwsgi>=2.0.30",
 ]
 
 [project.optional-dependencies]
