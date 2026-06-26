@@ -15,6 +15,11 @@ try:
 except ImportError:  # pragma: no cover
     tracer = None  # type: ignore[assignment]
 
+try:
+    from opentelemetry import trace
+except ImportError:  # pragma: no cover
+    trace = None  # type: ignore[assignment]
+
 LogProcessor = Callable[[Logger, str, EventDict], EventDict]
 
 
@@ -51,9 +56,8 @@ def event_renamer(
     """
     Rename `event` key to `message`.
 
-    Log entries keep the text message in the `event` field, but Datadog
-    uses the `message` field. This processor moves the value from one field to
-    the other.
+    Log entries keep the text message in the `event` field, but message is usually more
+    appropriate. This processor moves the value from one field to the other.
     See https://github.com/hynek/structlog/issues/35#issuecomment-591321744
     """
     event_dict["message"] = event_dict.pop("event")
@@ -143,6 +147,40 @@ def datadog_injector_builder(config: LogConfig) -> LogProcessor | None:
 DatadogInjectorFactory = LogProcessorFactory(builder=datadog_injector_builder)
 
 
+def otel_processor(
+    _logger: Logger,
+    _method_name: str,
+    event_dict: EventDict,
+) -> EventDict:
+    span = trace and trace.get_current_span()
+    if not span:
+        return event_dict
+
+    ctx = span.get_span_context()
+    if not ctx.is_valid:
+        return event_dict
+
+    event_dict.update(
+        {
+            "otel.span_name": getattr(span, "name", None),
+            "otel.span_id": trace.format_span_id(ctx.span_id),
+            "otel.trace_id": trace.format_trace_id(ctx.trace_id),
+        }
+    )
+
+    return event_dict
+
+
+def otel_processor_builder(config: LogConfig) -> LogProcessor | None:
+    if not config.trace_injection_enabled:
+        return None
+
+    return otel_processor
+
+
+OtelInjectorFactory = LogProcessorFactory(builder=otel_processor_builder)
+
+
 SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.contextvars.merge_contextvars,
     structlog.stdlib.add_logger_name,
@@ -156,4 +194,5 @@ SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     EventRenamerFactory,
     LevelRenamerFactory,
     DatadogInjectorFactory,
+    OtelInjectorFactory,
 ]
