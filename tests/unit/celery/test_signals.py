@@ -6,9 +6,7 @@ import pytest
 import structlog
 from _pytest.logging import LogCaptureFixture
 from celery import Celery, Task
-from celery.contrib.testing.worker import (  # type: ignore[import-untyped]
-    TestWorkController,
-)
+from celery.contrib.testing.worker import TestWorkController
 from freezegun import freeze_time
 from structlog.contextvars import bound_contextvars
 

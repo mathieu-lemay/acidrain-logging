@@ -35,8 +35,7 @@ def _log_celery_startup(
     sender: str, instance: Worker, **__: dict[str, Any]
 ) -> None:  # pragma: no cover: Covered through module tests
     """Log Celery's banner, which we are hiding with the --quiet param."""
-    # Typing is wrong, instance does have `startup_info`
-    banner = instance.startup_info(artlines=False)  # type: ignore[attr-defined]
+    banner = instance.startup_info(artlines=False)
     log.info("Celery Startup (%s)\n%s", sender, banner)
 
 
