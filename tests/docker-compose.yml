@@ -38,4 +38,6 @@ services:
     depends_on:
       - broker
   broker:
-    image: "rabbitmq:alpine"
+    # Pin to 3.x until kombu 5.7 is released
+    # https://github.com/celery/celery/discussions/9639
+    image: "rabbitmq:3-alpine"
