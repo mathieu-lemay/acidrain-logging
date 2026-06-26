@@ -1,5 +1,5 @@
 import logging
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import Field, field_validator
@@ -9,7 +9,7 @@ from pydantic_settings import (
 )
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     __slots__ = ()
 
     CONSOLE = "console"

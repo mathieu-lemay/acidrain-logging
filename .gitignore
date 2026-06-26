@@ -6,6 +6,11 @@ dist/
 wheels/
 *.egg-info
 
+# Env
+.env
+.envrc
+.env.*
+
 # Tools
 .coverage*
 .mypy_cache
