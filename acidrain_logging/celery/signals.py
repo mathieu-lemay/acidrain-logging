@@ -118,5 +118,5 @@ def connect_signals() -> None:
     # The order is important. We want our postrun to run before otel's,
     # and our prerun to run after otel's
     task_postrun.connect(_task_postrun)
-    CeleryInstrumentor().instrument()
+    CeleryInstrumentor().instrument()  # type: ignore[no-untyped-call]
     task_prerun.connect(_task_prerun)

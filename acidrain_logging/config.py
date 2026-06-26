@@ -45,7 +45,7 @@ class LogConfig(BaseSettings):
         return sanitized
 
 
-class TraceExporter(str, Enum):
+class TraceExporter(StrEnum):
     __slots__ = ()
 
     CONSOLE = "console"
