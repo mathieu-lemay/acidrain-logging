@@ -4,12 +4,12 @@ import pytest
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
-from acidrain_logging import configure_tracing
-from acidrain_logging.config import OtelConfig, TraceExporter
+from acidrain_logging import configure_telemetry
+from acidrain_logging.config import OtelConfig, SpanExporterType
 
 
-@patch("acidrain_logging.tracing.set_tracer_provider")
-@patch("acidrain_logging.tracing.TracerProvider")
+@patch("acidrain_logging.telemetry.set_tracer_provider")
+@patch("acidrain_logging.telemetry.TracerProvider")
 @pytest.mark.parametrize(
     ("exporter", "exporter_class"),
     [
@@ -24,8 +24,8 @@ def test_configure_otel(
     exporter: str,
     exporter_class: type | None,
 ) -> None:
-    config = OtelConfig(trace_exporter=TraceExporter(exporter))
-    configure_tracing(config)
+    config = OtelConfig(span_exporter=SpanExporterType(exporter))
+    configure_telemetry(config)
 
     tp = tracer_provider_cls_mock.return_value
 
@@ -39,13 +39,13 @@ def test_configure_otel(
     set_tracer_provider_mock.assert_called_with(tp)
 
 
-@patch("acidrain_logging.tracing.set_tracer_provider")
-@patch("acidrain_logging.tracing.TracerProvider")
+@patch("acidrain_logging.telemetry.set_tracer_provider")
+@patch("acidrain_logging.telemetry.TracerProvider")
 def test_configure_otel_uses_default_config(
     tracer_provider_cls_mock: Mock,
     set_tracer_provider_mock: Mock,
 ) -> None:
-    configure_tracing()
+    configure_telemetry()
 
     tp = tracer_provider_cls_mock.return_value
 

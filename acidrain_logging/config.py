@@ -45,7 +45,7 @@ class LogConfig(BaseSettings):
         return sanitized
 
 
-class TraceExporter(StrEnum):
+class SpanExporterType(StrEnum):
     __slots__ = ()
 
     CONSOLE = "console"
@@ -58,4 +58,4 @@ class OtelConfig(BaseSettings):
         env_prefix="acidrain_otel_", env_ignore_empty=True
     )
 
-    trace_exporter: TraceExporter = TraceExporter.OTLP
+    span_exporter: SpanExporterType = SpanExporterType.OTLP

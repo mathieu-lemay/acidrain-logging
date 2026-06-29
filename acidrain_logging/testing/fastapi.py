@@ -6,7 +6,7 @@ import structlog
 from fastapi import FastAPI, Path, Query
 from pydantic import BaseModel
 
-from acidrain_logging import LogConfig, configure_logger, configure_tracing
+from acidrain_logging import LogConfig, configure_logger, configure_telemetry
 from acidrain_logging.config import OtelConfig
 from acidrain_logging.fastapi.middlewares import add_log_middlewares
 
@@ -43,7 +43,7 @@ def create_app(
     otel_config = otel_config or OtelConfig()
 
     configure_logger(log_config)
-    configure_tracing(otel_config)
+    configure_telemetry(otel_config)
 
     add_log_middlewares(app)
 

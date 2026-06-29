@@ -4,14 +4,10 @@ services:
     image: "acidrain-logging:dev"
     command: ["uvicorn", "--factory", "acidrain_logging.testing.fastapi:create_app"]
     environment:
-      DD_ENV: "testing"
-      DD_SERVICE: "test-fastapi"
-      DD_VERSION: "0.0.0-dev"
-      DD_TRACE_ENABLED: true
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: 8000
-      OTEL_SERVICE_NAME: "test-fastapi"
-      ACIDRAIN_OTEL_TRACE_EXPORTER: "console"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=test-fastapi,service.version=0.0.0-dev"
+      ACIDRAIN_OTEL_SPAN_EXPORTER: "console"
     ports:
       - 8000
   flask:
@@ -19,12 +15,8 @@ services:
     image: "acidrain-logging:dev"
     command: ["gunicorn", "--bind", ":8000", "acidrain_logging.testing.flask.main:app"]
     environment:
-      DD_ENV: "testing"
-      DD_SERVICE: "test-flask"
-      DD_VERSION: "0.0.0-dev"
-      DD_TRACE_ENABLED: true
-      OTEL_SERVICE_NAME: "test-flask"
-      ACIDRAIN_OTEL_TRACE_EXPORTER: "console"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=test-flask,service.version=0.0.0-dev"
+      ACIDRAIN_OTEL_SPAN_EXPORTER: "console"
     ports:
       - 8000
   worker:
@@ -32,12 +24,8 @@ services:
     image: "acidrain-logging:dev"
     command: ["celery", "-A", "acidrain_logging.testing.celery", "--quiet", "worker"]
     environment:
-      DD_ENV: "testing"
-      DD_SERVICE: "test-api"
-      DD_VERSION: "0.0.0-dev"
-      DD_TRACE_ENABLED: true
-      OTEL_SERVICE_NAME: "test-celery"
-      ACIDRAIN_OTEL_TRACE_EXPORTER: "console"
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=test-celery,service.version=0.0.0-dev"
+      ACIDRAIN_OTEL_SPAN_EXPORTER: "console"
     user: nobody
     tmpfs:
       - /var/run/celery

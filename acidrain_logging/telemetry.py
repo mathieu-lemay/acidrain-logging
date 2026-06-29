@@ -1,5 +1,6 @@
 import os
 
+import structlog
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
@@ -8,26 +9,28 @@ from opentelemetry.sdk.trace.export import (
     SpanExporter,
 )
 from opentelemetry.trace import set_tracer_provider
+from structlog.stdlib import BoundLogger
 
-from acidrain_logging.config import OtelConfig, TraceExporter
+from acidrain_logging.config import OtelConfig, SpanExporterType
+
+log: BoundLogger = structlog.get_logger()
 
 
-def configure_tracing(tracing_config: OtelConfig | None = None) -> None:
-    tracing_config = tracing_config or OtelConfig()
-
-    tp = TracerProvider()
+def configure_telemetry(telemetry_config: OtelConfig | None = None) -> None:
+    telemetry_config = telemetry_config or OtelConfig()
 
     exporter: SpanExporter | None = None
-
-    match tracing_config.trace_exporter:
-        case TraceExporter.CONSOLE:
+    match telemetry_config.span_exporter:
+        case SpanExporterType.OTLP:
+            exporter = OTLPSpanExporter()
+        case SpanExporterType.CONSOLE:
             exporter = ConsoleSpanExporter(
                 formatter=lambda s: s.to_json(indent=None) + os.linesep
             )
-        case TraceExporter.OTLP:
-            exporter = OTLPSpanExporter()
-        case TraceExporter.NONE:
+        case SpanExporterType.NONE:
             pass
+
+    tp = TracerProvider()
 
     if exporter:
         tp.add_span_processor(BatchSpanProcessor(exporter))

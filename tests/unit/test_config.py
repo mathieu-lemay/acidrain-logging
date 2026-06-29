@@ -3,7 +3,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from pydantic import ValidationError
 
 from acidrain_logging import LogConfig, OutputFormat
-from acidrain_logging.config import InvalidLogLevelError, OtelConfig, TraceExporter
+from acidrain_logging.config import InvalidLogLevelError, OtelConfig, SpanExporterType
 
 
 def test_log_config(monkeypatch: MonkeyPatch) -> None:
@@ -82,23 +82,23 @@ def test_log_config_logger_levels_can_be_an_empty_string(
 
 def test_otel_config(monkeypatch: MonkeyPatch) -> None:
     with monkeypatch.context() as ctx:
-        ctx.setenv("ACIDRAIN_OTEL_TRACE_EXPORTER", "console")
+        ctx.setenv("ACIDRAIN_OTEL_SPAN_EXPORTER", "console")
 
         config = OtelConfig()
 
-    assert config.trace_exporter == TraceExporter.CONSOLE
+    assert config.span_exporter == SpanExporterType.CONSOLE
 
 
-def test_tracing_config_default_values() -> None:
+def test_otel_config_default_values() -> None:
     config = OtelConfig()
 
-    assert config.trace_exporter == TraceExporter.OTLP
+    assert config.span_exporter == SpanExporterType.OTLP
 
 
 @pytest.mark.parametrize(
     ("exporter", "is_valid"),
     [
-        *((exp.value, True) for exp in TraceExporter),
+        *((exp.value, True) for exp in SpanExporterType),
         ("CoNsOlE", False),  # Case matters
         ("invalid", False),
     ],
@@ -107,11 +107,11 @@ def test_otel_config_validate_exporter(
     *, monkeypatch: MonkeyPatch, exporter: str, is_valid: bool
 ) -> None:
     with monkeypatch.context() as ctx:
-        ctx.setenv("ACIDRAIN_OTEL_TRACE_EXPORTER", exporter)
+        ctx.setenv("ACIDRAIN_OTEL_SPAN_EXPORTER", exporter)
 
         if is_valid:
             config = OtelConfig()
-            assert config.trace_exporter == TraceExporter(exporter)
+            assert config.span_exporter == SpanExporterType(exporter)
         else:
-            with pytest.raises(ValidationError, match="trace_exporter"):
+            with pytest.raises(ValidationError, match="span_exporter"):
                 _ = OtelConfig()

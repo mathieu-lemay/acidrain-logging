@@ -1,12 +1,12 @@
-from .config import LogConfig, OtelConfig, OutputFormat, TraceExporter
+from .config import LogConfig, OtelConfig, OutputFormat, SpanExporterType
 from .logging import configure_logger
-from .tracing import configure_tracing
+from .telemetry import configure_telemetry
 
 __all__ = (
     "LogConfig",
     "OtelConfig",
     "OutputFormat",
-    "TraceExporter",
+    "SpanExporterType",
     "configure_logger",
-    "configure_tracing",
+    "configure_telemetry",
 )

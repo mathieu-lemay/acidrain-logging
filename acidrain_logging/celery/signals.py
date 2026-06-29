@@ -17,7 +17,7 @@ from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from structlog.contextvars import bind_contextvars, get_contextvars, reset_contextvars
 from structlog.stdlib import BoundLogger
 
-from acidrain_logging import configure_logger, configure_tracing
+from acidrain_logging import configure_logger, configure_telemetry
 
 if TYPE_CHECKING:
     from celery import Task
@@ -29,8 +29,8 @@ def utcnow() -> datetime:
     return datetime.now(tz=pytz.UTC)
 
 
-def _setup_tracing(*_: tuple[Any], **__: dict[str, Any]) -> None:
-    configure_tracing()
+def _setup_telemetry(*_: tuple[Any], **__: dict[str, Any]) -> None:
+    configure_telemetry()
 
 
 def _setup_logging(*_: tuple[Any], **__: dict[str, Any]) -> None:
@@ -110,7 +110,7 @@ def _task_postrun(
 
 
 def connect_signals() -> None:
-    worker_process_init.connect(_setup_tracing)
+    worker_process_init.connect(_setup_telemetry)
     setup_logging.connect(_setup_logging)
     celeryd_after_setup.connect(_log_celery_startup)
     before_task_publish.connect(_add_task_meta)
