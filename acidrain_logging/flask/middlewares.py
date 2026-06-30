@@ -71,6 +71,7 @@ def _log_request(response: Response) -> Response:
 
     return response
 
+
 def _inject_trace_id(response: Response) -> Response:
     span = get_current_span_context()
     if not span:
@@ -79,6 +80,7 @@ def _inject_trace_id(response: Response) -> Response:
     response.headers["X-Trace-Id"] = format_trace_id(span.trace_id)
 
     return response
+
 
 def add_log_middlewares(app: Flask) -> None:
     FlaskInstrumentor().instrument_app(app)  # type: ignore[no-untyped-call]

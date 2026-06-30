@@ -8,8 +8,7 @@ from opentelemetry.sdk.trace.export import (
     ConsoleSpanExporter,
     SpanExporter,
 )
-from opentelemetry.trace import SpanContext, get_current_span
-from opentelemetry.trace import set_tracer_provider
+from opentelemetry.trace import SpanContext, get_current_span, set_tracer_provider
 from structlog.stdlib import BoundLogger
 
 from acidrain_logging.config import OtelConfig, SpanExporterType

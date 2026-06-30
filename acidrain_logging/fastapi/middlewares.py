@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.trace import format_trace_id, get_current_span
+from opentelemetry.trace import format_trace_id
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
