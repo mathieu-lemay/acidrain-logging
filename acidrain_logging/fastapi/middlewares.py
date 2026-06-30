@@ -1,15 +1,17 @@
 import time
 from typing import Any
-from uuid import uuid4
 
 import structlog
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.trace import format_trace_id, get_current_span
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
-from structlog.contextvars import bind_contextvars, clear_contextvars
+from structlog.contextvars import clear_contextvars
 from structlog.stdlib import BoundLogger
+
+from acidrain_logging.telemetry import get_current_span_context
 
 log: BoundLogger = structlog.get_logger()
 
@@ -27,10 +29,15 @@ class TraceIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        trace_id = request.headers.get("X-Trace-Id") or str(uuid4())
-        bind_contextvars(trace_id=trace_id)
+        response = await call_next(request)
 
-        return await call_next(request)
+        span = get_current_span_context()
+        if not span:
+            return response
+
+        response.headers["X-Trace-Id"] = format_trace_id(span.trace_id)
+
+        return response
 
 
 class LogRequestMiddleware(BaseHTTPMiddleware):

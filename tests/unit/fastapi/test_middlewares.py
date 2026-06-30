@@ -1,5 +1,4 @@
-from unittest.mock import Mock, patch
-from uuid import uuid4
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from _pytest.logging import LogCaptureFixture
@@ -8,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import Span, SpanContext
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
@@ -51,37 +51,28 @@ def test_context_reset_middleware(
     assert "extra_value" not in log_values
 
 
-def test_trace_id_middleware_adds_trace_id_when_no_header(
-    api_client: TestClient, caplog: LogCaptureFixture
+def test_trace_id_middleware_adds_trace_id_to_response_headers(
+    api_client: TestClient, faker: Faker
 ) -> None:
-    trace_id = uuid4()
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
 
-    with patch(f"{middlewares.__name__}.uuid4") as uuid4_mock:
-        uuid4_mock.return_value = trace_id
+    traceparent = f"00-{trace_id}-{span_id}-00"
+
+    resp = api_client.get("/", headers={"traceparent": traceparent})
+
+    assert resp.is_success
+    assert resp.headers["X-Trace-Id"] == str(trace_id)
+
+
+def test_trace_id_middleware_does_nothing_if_span_is_invalid(
+    api_client: TestClient,
+) -> None:
+    with patch(f"{middlewares.__name__}.get_current_span_context", return_value=None):
         resp = api_client.get("/")
 
     assert resp.is_success
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
-
-
-def test_trace_id_middleware_re_uses_trace_id_from_headers(
-    api_client: TestClient, caplog: LogCaptureFixture, faker: Faker
-) -> None:
-    trace_id = faker.pystr()
-
-    resp = api_client.get("/", headers={"x-trace-id": trace_id})
-    assert resp.is_success
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
+    assert "X-Trace-Id" not in resp.headers
 
 
 def test_otel_instrumentation_adds_trace_id_when_no_header(

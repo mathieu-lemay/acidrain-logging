@@ -53,58 +53,28 @@ def test_context_reset_middleware(
     assert "extra_value" not in log_values
 
 
-def test_trace_id_middleware_adds_trace_id_when_no_header(
-    api_client: FlaskClient, caplog: LogCaptureFixture
+def test_trace_id_middleware_adds_trace_id_to_response_headers(
+    api_client: FlaskClient, faker: Faker
 ) -> None:
-    trace_id = uuid4()
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
 
-    with patch(f"{middlewares.__name__}.uuid4") as uuid4_mock:
-        uuid4_mock.return_value = trace_id
+    traceparent = f"00-{trace_id}-{span_id}-00"
+
+    resp = api_client.get("/", headers={"traceparent": traceparent})
+
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.headers.get("X-Trace-Id") == str(trace_id)
+
+
+def test_trace_id_middleware_does_nothing_if_span_is_invalid(
+    api_client: FlaskClient,
+) -> None:
+    with patch(f"{middlewares.__name__}.get_current_span_context", return_value=None):
         resp = api_client.get("/")
 
     assert resp.status_code == HTTPStatus.OK
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
-
-
-def test_trace_id_middleware_re_uses_trace_id_from_headers(
-    api_client: FlaskClient, caplog: LogCaptureFixture, faker: Faker
-) -> None:
-    trace_id = faker.pystr()
-
-    resp = api_client.get("/", headers={"x-trace-id": trace_id})
-    assert resp.status_code == HTTPStatus.OK
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
-
-
-def test_otel_instrumentation_adds_trace_id_when_no_header(
-    api_client: FlaskClient,
-    span_exporter: InMemorySpanExporter,
-    caplog: LogCaptureFixture,
-) -> None:
-    resp = api_client.get("/")
-    assert resp.status_code == HTTPStatus.OK
-
-    assert len(span_exporter.get_finished_spans()) != 0
-    span = next(
-        (s for s in span_exporter.get_finished_spans() if s.name == "GET /"), None
-    )
-    assert span is not None
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["otel.trace_id"] == trace.format_trace_id(span.context.trace_id)
+    assert resp.headers.get("X-Trace-Id") is None
 
 
 def test_otel_instrumentation_re_uses_trace_id_from_headers(

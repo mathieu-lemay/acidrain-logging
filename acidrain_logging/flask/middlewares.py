@@ -1,14 +1,15 @@
 import time
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 import structlog
 from flask import Flask, Response, g, request
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from structlog.contextvars import bind_contextvars, clear_contextvars
+from opentelemetry.trace import format_trace_id
+from structlog.contextvars import clear_contextvars
 from structlog.stdlib import BoundLogger
-from werkzeug.wrappers import Request
+
+from acidrain_logging.telemetry import get_current_span_context
 
 log: BoundLogger = structlog.get_logger()
 
@@ -26,18 +27,6 @@ class ResetContextMiddleware(BaseMiddleware):
         self, environ: "WSGIEnvironment", start_response: "StartResponse"
     ) -> Iterable[bytes]:
         clear_contextvars()
-        return self.app(environ, start_response)
-
-
-class TraceIdMiddleware(BaseMiddleware):
-    def __call__(
-        self, environ: "WSGIEnvironment", start_response: "StartResponse"
-    ) -> Iterable[bytes]:
-        req = Request(environ)
-
-        trace_id = req.headers.get("X-Trace-Id") or str(uuid4())
-        bind_contextvars(trace_id=trace_id)
-
         return self.app(environ, start_response)
 
 
@@ -82,13 +71,22 @@ def _log_request(response: Response) -> Response:
 
     return response
 
+def _inject_trace_id(response: Response) -> Response:
+    span = get_current_span_context()
+    if not span:
+        return response
+
+    response.headers["X-Trace-Id"] = format_trace_id(span.trace_id)
+
+    return response
 
 def add_log_middlewares(app: Flask) -> None:
     FlaskInstrumentor().instrument_app(app)  # type: ignore[no-untyped-call]
 
-    for cls in reversed((ResetContextMiddleware, TraceIdMiddleware)):
+    for cls in reversed((ResetContextMiddleware,)):
         # Types are fine, and assigning to a method is what we _must_ do here.
-        app.wsgi_app = cls(app.wsgi_app)  # type: ignore[assignment, method-assign]
+        app.wsgi_app = cls(app.wsgi_app)  # type: ignore[method-assign]
 
     app.before_request(_inject_start_time)
     app.after_request(_log_request)
+    app.after_request(_inject_trace_id)

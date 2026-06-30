@@ -8,6 +8,7 @@ from opentelemetry.sdk.trace.export import (
     ConsoleSpanExporter,
     SpanExporter,
 )
+from opentelemetry.trace import SpanContext, get_current_span
 from opentelemetry.trace import set_tracer_provider
 from structlog.stdlib import BoundLogger
 
@@ -36,3 +37,12 @@ def configure_telemetry(telemetry_config: OtelConfig | None = None) -> None:
         tp.add_span_processor(BatchSpanProcessor(exporter))
 
     set_tracer_provider(tp)
+
+
+def get_current_span_context() -> "SpanContext | None":
+    span = get_current_span()
+    ctx = span.get_span_context()
+    if not ctx.is_valid:
+        return None
+
+    return ctx
