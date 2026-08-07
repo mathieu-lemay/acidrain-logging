@@ -44,8 +44,8 @@ celery = [
     "opentelemetry-instrumentation-celery (>=0.64b0,<0.65)",
 ]
 fastapi = [
-    "fastapi (>=0.138.1,<0.139.0)",
-    "uvicorn (>=0.49.0,<0.50.0)",
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.52.1,<0.53.0)",
     "opentelemetry-instrumentation-fastapi (>=0.64b0,<0.65)",
 ]
 flask = [
