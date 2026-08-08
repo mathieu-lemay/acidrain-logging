@@ -69,8 +69,8 @@ async def test_api_logging_uses_otel(
     assert len(api_logs) == 1
     entry = json.loads(api_logs[0])
 
-    assert "otel.trace_id" in entry
-    assert "otel.span_id" in entry
+    assert "trace_id" in entry
+    assert "span_id" in entry
 
     def get_exported_spans() -> list[dict[str, Any]]:
         logs = docker_logs("fastapi", since=timestamp)

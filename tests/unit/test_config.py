@@ -1,12 +1,17 @@
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
+from faker import Faker
 from pydantic import ValidationError
 
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.config import InvalidLogLevelError, OtelConfig, SpanExporterType
 
 
-def test_log_config(monkeypatch: MonkeyPatch) -> None:
+def test_log_config(monkeypatch: MonkeyPatch, faker: Faker) -> None:
+    otel_trace_id_field = faker.pystr()
+    otel_span_id_field = faker.pystr()
+    otel_span_name_field = faker.pystr()
+
     with monkeypatch.context() as ctx:
         ctx.setenv("ACIDRAIN_LOG_LEVEL", "DEBUG")
         ctx.setenv("ACIDRAIN_LOG_OUTPUT_FORMAT", "console")
@@ -15,6 +20,9 @@ def test_log_config(monkeypatch: MonkeyPatch) -> None:
         ctx.setenv("ACIDRAIN_LOG_TIMESTAMP_FORMAT", "%m/%d/%Y")  # derp format
         ctx.setenv("ACIDRAIN_LOG_TIMESTAMP_KEY", "asctime")
         ctx.setenv("ACIDRAIN_LOG_TRACE_INJECTION_ENABLED", "false")
+        ctx.setenv("ACIDRAIN_LOG_OTEL_TRACE_ID_FIELD", otel_trace_id_field)
+        ctx.setenv("ACIDRAIN_LOG_OTEL_SPAN_ID_FIELD", otel_span_id_field)
+        ctx.setenv("ACIDRAIN_LOG_OTEL_SPAN_NAME_FIELD", otel_span_name_field)
 
         config = LogConfig()
 
@@ -25,6 +33,9 @@ def test_log_config(monkeypatch: MonkeyPatch) -> None:
     assert config.timestamp_format == "%m/%d/%Y"
     assert config.timestamp_key == "asctime"
     assert config.trace_injection_enabled is False
+    assert config.otel_trace_id_field == otel_trace_id_field
+    assert config.otel_span_id_field == otel_span_id_field
+    assert config.otel_span_name_field == otel_span_name_field
 
 
 def test_log_config_default_values() -> None:
@@ -37,6 +48,9 @@ def test_log_config_default_values() -> None:
     assert config.timestamp_format == "iso"
     assert config.timestamp_key == "timestamp"
     assert config.trace_injection_enabled is True
+    assert config.otel_trace_id_field == "trace_id"
+    assert config.otel_span_id_field == "span_id"
+    assert config.otel_span_name_field == "span_name"
 
 
 @pytest.mark.parametrize(

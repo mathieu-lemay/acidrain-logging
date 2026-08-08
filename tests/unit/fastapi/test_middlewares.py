@@ -19,7 +19,10 @@ from acidrain_logging.testing.fastapi import create_app
 def log_config() -> LogConfig:
     logger_levels = {"httpx2": "ERROR"}
     return LogConfigFactory.build(
-        output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels
+        output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels,
+        otel_trace_id_field="trace_id",
+        otel_span_id_field="span_id",
+        otel_span_name_field="span_name",
     )
 
 
@@ -91,7 +94,7 @@ def test_otel_instrumentation_adds_trace_id_when_no_header(
 
     log_values = caplog.records[0].msg
     assert isinstance(log_values, dict)  # type check
-    assert log_values["otel.trace_id"] == trace.format_trace_id(span.context.trace_id)
+    assert log_values["trace_id"] == trace.format_trace_id(span.context.trace_id)
 
 
 def test_otel_instrumentation_re_uses_trace_id_from_headers(

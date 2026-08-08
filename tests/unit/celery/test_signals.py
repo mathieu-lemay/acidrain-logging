@@ -122,11 +122,11 @@ def test_trace_id_is_propagated_to_all_task_logs(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    assert "otel.trace_id" in task_start_record
-    assert "otel.span_id" in task_start_record
+    assert "trace_id" in task_start_record
+    assert "span_id" in task_start_record
 
-    expected_trace_id = task_start_record["otel.trace_id"]
-    expected_span_id = task_start_record["otel.span_id"]
+    expected_trace_id = task_start_record["trace_id"]
+    expected_span_id = task_start_record["span_id"]
 
     records = [
         task_start_record,
@@ -141,10 +141,10 @@ def test_trace_id_is_propagated_to_all_task_logs(
     assert len(records) == 3
 
     # Ensure all logs have the same trace id
-    assert {e["otel.trace_id"] for e in records} == {expected_trace_id}
+    assert {e["trace_id"] for e in records} == {expected_trace_id}
 
     # Ensure all logs have the same span id
-    assert {e["otel.span_id"] for e in records} == {expected_span_id}
+    assert {e["span_id"] for e in records} == {expected_span_id}
 
     span = next(
         (
@@ -178,8 +178,8 @@ def test_span_is_propagated_to_started_tasks(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    assert "otel.trace_id" in task_start_record
-    assert task_start_record["otel.trace_id"] == trace.format_trace_id(trace_id)
+    assert "trace_id" in task_start_record
+    assert task_start_record["trace_id"] == trace.format_trace_id(trace_id)
 
 
 def test_task_publish_time_is_logged_when_task_starts(
