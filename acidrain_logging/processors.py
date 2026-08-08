@@ -108,9 +108,7 @@ def drop_color_message_key(
 
 
 class OtelProcessor:
-    """
-    Add tracing / span info to log events.
-    """
+    """Add tracing / span info to log events."""
 
     def __init__(self, config: LogConfig) -> None:
         self._trace_id_field = config.otel_trace_id_field
