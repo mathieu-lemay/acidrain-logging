@@ -20,7 +20,7 @@ from acidrain_logging.processors import (
     event_renamer,
     event_renamer_builder,
     level_renamer_builder,
-    otel_processor,
+    OtelProcessor,
     otel_processor_builder,
     timestamper_builder,
 )
@@ -179,9 +179,9 @@ def test_otel_injector_adds_the_span_values_if_there_is_one(
 
     event_dict = otel_processor(logger, method_name, {})
 
-    assert event_dict["otel.span_name"] == span_name
-    assert event_dict["otel.span_id"] == format_span_id(span_id)
-    assert event_dict["otel.trace_id"] == format_trace_id(trace_id)
+    assert event_dict["span_name"] == span_name
+    assert event_dict["span_id"] == format_span_id(span_id)
+    assert event_dict["trace_id"] == format_trace_id(trace_id)
 
 
 @patch("acidrain_logging.processors.trace", new=None)
@@ -221,7 +221,7 @@ def test_otel_injector_does_nothing_if_span_is_invalid(
     ("trace_injection_enabled", "expected"),
     [
         (False, None),
-        (True, otel_processor),
+        (True, OtelProcessor),
     ],
 )
 def test_otel_processor_builder_returns_the_right_processor(

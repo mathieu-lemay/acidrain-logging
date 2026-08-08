@@ -103,45 +103,53 @@ def drop_color_message_key(
     Uvicorn logs the message a second time in the extra `color_message`, but we don't
     need it. This processor drops the key from the event dict if it exists.
     """
-    event_dict.pop("color_message", None)
+    # event_dict.pop("color_message", None)
+    del event_dict["color_message"]
     return event_dict
 
 
-def otel_processor(
-    _logger: Logger,
-    _method_name: str,
-    event_dict: EventDict,
-) -> EventDict:
-    # To run with agent:
-    #   https://opentelemetry.io/docs/zero-code/python/#configuring-the-agent
-    span = trace and trace.get_current_span()
-    if not span:
+class OtelProcessor:
+    """
+    Add tracing / span info to log events.
+    """
+
+    def __init__(self, config: LogConfig) -> None:
+        self._trace_id_field = config.otel_trace_id_field
+        self._span_id_field = config.otel_span_id_field
+        self._span_name_field = config.otel_span_name_field
+
+    def __call__(
+        self, _logger: Logger, _method_name: str, event_dict: EventDict
+    ) -> EventDict:
+        # To run with agent:
+        #   https://opentelemetry.io/docs/zero-code/python/#configuring-the-agent
+        span = trace and trace.get_current_span()
+        if not span:
+            return event_dict
+
+        ctx = span.get_span_context()
+        if not ctx.is_valid:
+            return event_dict
+
+        event_dict.update(
+            {
+                self._trace_id_field: trace.format_trace_id(ctx.trace_id),
+                self._span_id_field: trace.format_span_id(ctx.span_id),
+                self._span_name_field: getattr(span, "name", None),
+            }
+        )
+
         return event_dict
-
-    ctx = span.get_span_context()
-    if not ctx.is_valid:
-        return event_dict
-
-    event_dict.update(
-        {
-            "otel.span_name": getattr(span, "name", None),
-            "otel.span_id": trace.format_span_id(ctx.span_id),
-            "otel.trace_id": trace.format_trace_id(ctx.trace_id),
-        }
-    )
-
-    return event_dict
 
 
 def otel_processor_builder(config: LogConfig) -> LogProcessor | None:
     if not config.trace_injection_enabled:
         return None
 
-    return otel_processor
+    return OtelProcessor(config)
 
 
 OtelInjectorFactory = LogProcessorFactory(builder=otel_processor_builder)
-
 
 SHARED_PRE_PROCESSORS: list[LogProcessor | LogProcessorFactory] = [
     structlog.contextvars.merge_contextvars,
