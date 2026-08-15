@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import ANY
-from uuid import UUID
 
 import pytest
 import structlog
@@ -105,49 +104,6 @@ def test_task_metadata_is_logged_when_task_completes(
     }
     assert min_start <= record["task"]["start_time"] <= max_start
     assert 0 < record["task"]["duration"] <= (max_start - min_start).total_seconds()
-
-
-@pytest.mark.parametrize("current_trace_id", [None, "some-trace-id"])
-def test_dd_trace_id_is_propagated_to_all_task_logs(
-    logging_task: "LoggingTask",
-    caplog: LogCaptureFixture,
-    current_trace_id: str | None,
-) -> None:
-    """
-    All logs should contain the trace id.
-
-    If there was a trace id in the context when the task was published, that one should
-    be propagated. Otherwise, a new one will be created.
-    """
-    with bound_contextvars(trace_id=current_trace_id):
-        result_future = logging_task.apply_async()
-
-    # Ensure the task has completed with success
-    assert result_future.get(timeout=2) == 0
-
-    task_start_record = find_log_record(
-        caplog,
-        f"Received task: {__name__}.{logging_task.__name__}",
-        result_future.task_id,
-    )
-    if current_trace_id:  # noqa: SIM108  # Use binary operator. The intent is clearer with an explicit if / else
-        expected_trace_id = current_trace_id
-    else:
-        # This validates that the record includes a trace id and that it's a valid UUID
-        expected_trace_id = str(UUID(task_start_record["trace_id"]))
-
-    task_running_record = find_log_record(
-        caplog, "Test task is running", result_future.task_id
-    )
-    task_complete_record = find_log_record(
-        caplog,
-        f"Task complete: {__name__}.{logging_task.__name__}",
-        result_future.task_id,
-    )
-
-    assert task_start_record["trace_id"] == expected_trace_id
-    assert task_running_record["trace_id"] == expected_trace_id
-    assert task_complete_record["trace_id"] == expected_trace_id
 
 
 def test_trace_id_is_propagated_to_all_task_logs(

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 import pytz
 import structlog
@@ -21,6 +20,8 @@ from acidrain_logging import configure_logger, configure_telemetry
 
 if TYPE_CHECKING:
     from celery import Task
+
+_PUBLISH_TIME_HEADER = "x-publish-time"
 
 log: BoundLogger = structlog.get_logger()
 
@@ -48,9 +49,8 @@ def _log_celery_startup(
 def _add_task_meta(
     headers: dict[str, Any], *_: tuple[Any], **__: dict[str, Any]
 ) -> None:
-    """Inject publish timestamp and trace id, if available, to all tasks."""
-    headers["x_trace_id"] = get_contextvars().get("trace_id") or str(uuid4())
-    headers["x_publish_tm"] = utcnow().isoformat()
+    """Inject publish timestamp to all tasks."""
+    headers[_PUBLISH_TIME_HEADER] = utcnow().isoformat()
 
 
 def _task_prerun(
@@ -61,14 +61,8 @@ def _task_prerun(
     *_: tuple[Any],
     **__: dict[str, Any],
 ) -> None:
-    """Add task data to logging context."""
+    """Add task data to the logging context."""
     start_time = utcnow()
-
-    trace_id = task.request.get("x_trace_id")
-    if trace_id:
-        # Bind the trace id if there's one in the props, otherwise, keep the one we may
-        # already have
-        bind_contextvars(trace_id=trace_id)
 
     bind_contextvars(task={"id": task_id, "name": task.name, "start_time": start_time})
 
@@ -78,7 +72,7 @@ def _task_prerun(
         "queue": task.request.get("delivery_info", {}).get("routing_key"),
     }
 
-    publish_tm = task.request.get("x_publish_tm")
+    publish_tm = task.request.get(_PUBLISH_TIME_HEADER)
     if publish_tm:
         log_data["publish_tm"] = publish_tm
         log_data["start_delay"] = (
