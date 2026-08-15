@@ -13,11 +13,19 @@ from celery.signals import (
     task_prerun,
     worker_process_init,
 )
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from structlog.contextvars import bind_contextvars, get_contextvars, reset_contextvars
 from structlog.stdlib import BoundLogger
 
 from acidrain_logging import configure_logger, configure_telemetry
+
+try:
+    from opentelemetry.instrumentation.celery import CeleryInstrumentor
+except ImportError:
+
+    class CeleryInstrumentor:
+        def instrument(self) -> None:
+            pass
+
 
 if TYPE_CHECKING:
     from celery import Task
