@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from logging import Logger
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from faker import Faker
@@ -15,12 +15,11 @@ from structlog.processors import TimeStamper
 from acidrain_logging import LogConfig, OutputFormat
 from acidrain_logging.processors import (
     LevelRenamer,
-    LogProcessor,
+    OtelProcessor,
     drop_color_message_key,
     event_renamer,
     event_renamer_builder,
     level_renamer_builder,
-    otel_processor,
     otel_processor_builder,
     timestamper_builder,
 )
@@ -177,17 +176,31 @@ def test_otel_injector_adds_the_span_values_if_there_is_one(
     mock_trace.format_span_id = format_span_id
     mock_trace.format_trace_id = format_trace_id
 
+    otel_trace_id_field = faker.pystr()
+    otel_span_id_field = faker.pystr()
+    otel_span_name_field = faker.pystr()
+
+    c = MagicMock(spec=LogConfig)
+    c.otel_trace_id_field = otel_trace_id_field
+    c.otel_span_id_field = otel_span_id_field
+    c.otel_span_name_field = otel_span_name_field
+
+    otel_processor = OtelProcessor(c)
+
     event_dict = otel_processor(logger, method_name, {})
 
-    assert event_dict["otel.span_name"] == span_name
-    assert event_dict["otel.span_id"] == format_span_id(span_id)
-    assert event_dict["otel.trace_id"] == format_trace_id(trace_id)
+    assert event_dict[otel_trace_id_field] == format_trace_id(trace_id)
+    assert event_dict[otel_span_id_field] == format_span_id(span_id)
+    assert event_dict[otel_span_name_field] == span_name
 
 
 @patch("acidrain_logging.processors.trace", new=None)
 def test_otel_injector_does_nothing_if_otel_is_not_installed(faker: Faker) -> None:
     logger = Mock(Logger)
     method_name = faker.pystr()
+
+    c = MagicMock()
+    otel_processor = OtelProcessor(c)
 
     event_dict = otel_processor(logger, method_name, {})
 
@@ -203,14 +216,15 @@ def test_otel_injector_does_nothing_if_otel_is_not_installed(faker: Faker) -> No
     ],
 )
 def test_otel_injector_does_nothing_if_span_is_invalid(
-    mock_trace: Mock,
-    faker: Faker,
-    span: Span,
+    mock_trace: Mock, faker: Faker, span: Span
 ) -> None:
     logger = Mock(Logger)
     method_name = faker.pystr()
 
     mock_trace.get_current_span.return_value = span
+
+    c = MagicMock()
+    otel_processor = OtelProcessor(c)
 
     event_dict = otel_processor(logger, method_name, {})
 
@@ -221,13 +235,16 @@ def test_otel_injector_does_nothing_if_span_is_invalid(
     ("trace_injection_enabled", "expected"),
     [
         (False, None),
-        (True, otel_processor),
+        (True, OtelProcessor),
     ],
 )
 def test_otel_processor_builder_returns_the_right_processor(
-    trace_injection_enabled: bool, expected: LogProcessor | None
+    trace_injection_enabled: bool, expected: type | None
 ) -> None:
     config = LogConfig(trace_injection_enabled=trace_injection_enabled)
     processor = otel_processor_builder(config)
 
-    assert processor is expected
+    if expected is not None:
+        assert isinstance(processor, expected)
+    else:
+        assert processor is expected

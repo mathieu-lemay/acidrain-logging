@@ -31,7 +31,11 @@ class LogConfig(BaseSettings):
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
     level_names: dict[str, str] | None = None
+
     trace_injection_enabled: bool = True
+    otel_trace_id_field: str = "trace_id"
+    otel_span_id_field: str = "span_id"
+    otel_span_name_field: str = "span_name"
 
     @field_validator("level")
     def validate_log_level(cls, value: str) -> str:

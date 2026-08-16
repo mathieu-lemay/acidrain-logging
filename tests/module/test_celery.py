@@ -69,8 +69,8 @@ async def test_task_logging_uses_otel(
     )
 
     assert entry is not None
-    assert "otel.trace_id" in entry
-    assert "otel.span_id" in entry
+    assert "trace_id" in entry
+    assert "span_id" in entry
 
     def get_exported_spans() -> list[dict[str, Any]]:
         logs = docker_logs("worker", since=timestamp)

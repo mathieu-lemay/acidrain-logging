@@ -10,7 +10,6 @@ from freezegun import freeze_time
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import TracerProvider
-from structlog.contextvars import bound_contextvars
 
 from acidrain_logging.celery.signals import connect_signals, utcnow
 from acidrain_logging.testing.utils import retry
@@ -122,11 +121,11 @@ def test_trace_id_is_propagated_to_all_task_logs(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    assert "otel.trace_id" in task_start_record
-    assert "otel.span_id" in task_start_record
+    assert "trace_id" in task_start_record
+    assert "span_id" in task_start_record
 
-    expected_trace_id = task_start_record["otel.trace_id"]
-    expected_span_id = task_start_record["otel.span_id"]
+    expected_trace_id = task_start_record["trace_id"]
+    expected_span_id = task_start_record["span_id"]
 
     records = [
         task_start_record,
@@ -141,10 +140,10 @@ def test_trace_id_is_propagated_to_all_task_logs(
     assert len(records) == 3
 
     # Ensure all logs have the same trace id
-    assert {e["otel.trace_id"] for e in records} == {expected_trace_id}
+    assert {e["trace_id"] for e in records} == {expected_trace_id}
 
     # Ensure all logs have the same span id
-    assert {e["otel.span_id"] for e in records} == {expected_span_id}
+    assert {e["span_id"] for e in records} == {expected_span_id}
 
     span = next(
         (
@@ -178,8 +177,8 @@ def test_span_is_propagated_to_started_tasks(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    assert "otel.trace_id" in task_start_record
-    assert task_start_record["otel.trace_id"] == trace.format_trace_id(trace_id)
+    assert "trace_id" in task_start_record
+    assert task_start_record["trace_id"] == trace.format_trace_id(trace_id)
 
 
 def test_task_publish_time_is_logged_when_task_starts(
@@ -203,15 +202,16 @@ def test_task_publish_time_is_logged_when_task_starts(
     assert 0 < start_delay <= (utcnow() - timestamp).total_seconds()
 
 
-@pytest.mark.parametrize("trace_id", [None, "some-trace-id"])
 def test_task_can_be_run_sync(
-    logging_task: "LoggingTask", caplog: LogCaptureFixture, trace_id: str | None
+    logging_task: "LoggingTask",
+    caplog: LogCaptureFixture,
+    tracer_provider: TracerProvider,
 ) -> None:
     """Task should run fine in a synchronous manner, but won't have a publish_tm."""
-    if trace_id:
-        with bound_contextvars(trace_id=trace_id):
-            result = logging_task.apply()
-    else:
+    tracer = trace.get_tracer(__name__, "0.0.0", tracer_provider)
+    with tracer.start_as_current_span("test-span") as span:
+        trace_id = trace.format_trace_id(span.get_span_context().trace_id)
+
         result = logging_task.apply()
 
     record = find_log_record(
@@ -224,10 +224,7 @@ def test_task_can_be_run_sync(
     assert "publish_tm" not in record["data"]
     assert "start_delay" not in record["data"]
 
-    if trace_id:
-        assert record["trace_id"] == trace_id
-    else:
-        assert "trace_id" not in record
+    assert record["trace_id"] == trace_id
 
 
 def find_log_record(
