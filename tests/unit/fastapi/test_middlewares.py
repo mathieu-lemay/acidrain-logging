@@ -17,7 +17,7 @@ from acidrain_logging.testing.fastapi import create_app
 
 @pytest.fixture(scope="module")
 def log_config() -> LogConfig:
-    logger_levels = {"httpx": "ERROR"}
+    logger_levels = {"httpx2": "ERROR"}
     return LogConfigFactory.build(
         output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels
     )

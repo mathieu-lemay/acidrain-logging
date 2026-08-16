@@ -24,7 +24,7 @@ dev = [
     "celery-types>=0.23.0",
     "faker>=37.4.0",
     "gunicorn>=23.0.0",
-    "httpx>=0.28.1",
+    "httpx2>=2.10.0,<3.0.0",
     "mypy>=2.0.0,<3.0.0",
     "polyfactory>=2.22.0",
     "pytest>=9.0.3,<10.0.0",
@@ -41,16 +41,16 @@ dev = [
 [project.optional-dependencies]
 celery = [
     "celery[redis] (>=5.2.7,<6.0.0)",
-    "opentelemetry-instrumentation-celery (>=0.64b0,<0.65)",
+    "opentelemetry-instrumentation-celery (>=0.65b0,<0.66)",
 ]
 fastapi = [
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.52.1,<0.53.0)",
-    "opentelemetry-instrumentation-fastapi (>=0.64b0,<0.65)",
+    "opentelemetry-instrumentation-fastapi (>=0.65b0,<0.66)",
 ]
 flask = [
     "flask (>=3.0.0,<4.0.0)",
-    "opentelemetry-instrumentation-flask (>=0.64b0,<0.65)",
+    "opentelemetry-instrumentation-flask (>=0.65b0,<0.66)",
 ]
 
 [tool.uv]
@@ -66,7 +66,6 @@ exclude_lines = [
 namespace_packages = true
 explicit_package_bases = true
 strict = true
-show_error_codes = true
 plugins = [
     "pydantic.mypy",
 ]
@@ -100,13 +99,14 @@ select = [
     "ALL"
 ]
 ignore = [
-    "COM", # flake8-commas
-    "FIX", # flake8-fixme
-    "TD", # flake8-todos
+    "COM",  # flake8-commas
+    "CPY",  # flake8-copyright
+    "FIX",  # flake8-fixme
+    "TD",  # flake8-todos
 
-    "D10", # Missing docstring in ...
-    "D203", # 1 blank line required before class docstring
-    "D212", # Multi-line docstring summary should start at the first line
+    "D10",  # Missing docstring in ...
+    "D203",  # 1 blank line required before class docstring
+    "D212",  # Multi-line docstring summary should start at the first line
 ]
 
 [tool.ruff.lint.pep8-naming]

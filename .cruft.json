@@ -1,6 +1,6 @@
 {
   "template": "git@github.com:mathieu-lemay/python-project-template.git",
-  "commit": "95790f4025a3dfb1e8abe7e84a74caae982fc757",
+  "commit": "b6e9e79a5f8a794cd57dcc6e8edc6eb8e6992a64",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -12,7 +12,7 @@
       "license": "MIT",
       "pydantic": true,
       "_template": "git@github.com:mathieu-lemay/python-project-template.git",
-      "_commit": "95790f4025a3dfb1e8abe7e84a74caae982fc757"
+      "_commit": "b6e9e79a5f8a794cd57dcc6e8edc6eb8e6992a64"
     }
   },
   "directory": null

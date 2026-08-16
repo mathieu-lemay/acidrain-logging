@@ -6,10 +6,10 @@ from typing import Any
 from unittest.mock import ANY
 from urllib.parse import urlparse
 
-import httpx
+import httpx2 as httpx
 import pytest
 import tenacity
-from httpx import AsyncClient, RequestError
+from httpx2 import AsyncClient, RequestError
 from pytest_docker.plugin import Services
 
 from tests.module.conftest import DockerLogs
@@ -36,7 +36,7 @@ def api_base_url(docker_ip: str, docker_services: Services) -> str:
 
 @pytest.fixture
 async def api_client(api_base_url: str) -> AsyncGenerator[AsyncClient, None]:
-    async with httpx.AsyncClient(base_url=api_base_url) as client:
+    async with AsyncClient(base_url=api_base_url) as client:
         yield client
 
 
@@ -89,7 +89,7 @@ async def test_request_logging_includes_all_metadata(
     assert entry["http"] == {
         "client": {
             "remote_ip": ANY,
-            "user_agent": f"python-httpx/{httpx.__version__}",
+            "user_agent": f"python-httpx2/{httpx.__version__}",
         },
         "method": "GET",
         "request": {
