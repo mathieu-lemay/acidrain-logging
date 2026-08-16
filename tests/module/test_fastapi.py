@@ -45,7 +45,7 @@ async def test_api_logging_uses_structlog(docker_logs: DockerLogs) -> None:
     api_logs = (docker_logs("fastapi")).split("\n")
 
     for entry in map(json.loads, filter(None, reversed(api_logs))):
-        if entry["message"] == "Application startup complete.":
+        if entry.get("message") == "Application startup complete.":
             break
     else:  # pragma: no cover
         pytest.fail("Could not find app startup log")
