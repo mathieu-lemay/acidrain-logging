@@ -10,7 +10,6 @@ from freezegun import freeze_time
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import TracerProvider
-from structlog.contextvars import bound_contextvars
 
 from acidrain_logging.celery.signals import connect_signals, utcnow
 from acidrain_logging.testing.utils import retry
@@ -203,15 +202,16 @@ def test_task_publish_time_is_logged_when_task_starts(
     assert 0 < start_delay <= (utcnow() - timestamp).total_seconds()
 
 
-@pytest.mark.parametrize("trace_id", [None, "some-trace-id"])
 def test_task_can_be_run_sync(
-    logging_task: "LoggingTask", caplog: LogCaptureFixture, trace_id: str | None
+    logging_task: "LoggingTask",
+    caplog: LogCaptureFixture,
+    tracer_provider: TracerProvider,
 ) -> None:
     """Task should run fine in a synchronous manner, but won't have a publish_tm."""
-    if trace_id:
-        with bound_contextvars(trace_id=trace_id):
-            result = logging_task.apply()
-    else:
+    tracer = trace.get_tracer(__name__, "0.0.0", tracer_provider)
+    with tracer.start_as_current_span("test-span") as span:
+        trace_id = trace.format_trace_id(span.get_span_context().trace_id)
+
         result = logging_task.apply()
 
     record = find_log_record(
@@ -224,10 +224,7 @@ def test_task_can_be_run_sync(
     assert "publish_tm" not in record["data"]
     assert "start_delay" not in record["data"]
 
-    if trace_id:
-        assert record["trace_id"] == trace_id
-    else:
-        assert "trace_id" not in record
+    assert record["trace_id"] == trace_id
 
 
 def find_log_record(

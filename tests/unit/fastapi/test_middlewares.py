@@ -19,7 +19,9 @@ from acidrain_logging.testing.fastapi import create_app
 def log_config() -> LogConfig:
     logger_levels = {"httpx2": "ERROR"}
     return LogConfigFactory.build(
-        output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels,
+        output_format=OutputFormat.CONSOLE,
+        level="INFO",
+        logger_levels=logger_levels,
         otel_trace_id_field="trace_id",
         otel_span_id_field="span_id",
         otel_span_name_field="span_name",
