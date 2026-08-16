@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 import pytz
 import structlog
@@ -11,20 +10,28 @@ from celery.signals import (
     setup_logging,
     task_postrun,
     task_prerun,
+    worker_process_init,
 )
+from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from structlog.contextvars import bind_contextvars, get_contextvars, reset_contextvars
 from structlog.stdlib import BoundLogger
 
-from acidrain_logging import configure_logger
+from acidrain_logging import configure_logger, configure_telemetry
 
 if TYPE_CHECKING:
     from celery import Task
+
+_PUBLISH_TIME_HEADER = "x-publish-time"
 
 log: BoundLogger = structlog.get_logger()
 
 
 def utcnow() -> datetime:
     return datetime.now(tz=pytz.UTC)
+
+
+def _setup_telemetry(*_: tuple[Any], **__: dict[str, Any]) -> None:
+    configure_telemetry()
 
 
 def _setup_logging(*_: tuple[Any], **__: dict[str, Any]) -> None:
@@ -42,9 +49,8 @@ def _log_celery_startup(
 def _add_task_meta(
     headers: dict[str, Any], *_: tuple[Any], **__: dict[str, Any]
 ) -> None:
-    """Inject publish timestamp and trace id, if available, to all tasks."""
-    headers["x_trace_id"] = get_contextvars().get("trace_id") or str(uuid4())
-    headers["x_publish_tm"] = utcnow().isoformat()
+    """Inject publish timestamp to all tasks."""
+    headers[_PUBLISH_TIME_HEADER] = utcnow().isoformat()
 
 
 def _task_prerun(
@@ -55,14 +61,8 @@ def _task_prerun(
     *_: tuple[Any],
     **__: dict[str, Any],
 ) -> None:
-    """Add task data to logging context."""
+    """Add task data to the logging context."""
     start_time = utcnow()
-
-    trace_id = task.request.get("x_trace_id")
-    if trace_id:
-        # Bind the trace id if there's one in the props, otherwise, keep the one we may
-        # already have
-        bind_contextvars(trace_id=trace_id)
 
     bind_contextvars(task={"id": task_id, "name": task.name, "start_time": start_time})
 
@@ -72,7 +72,7 @@ def _task_prerun(
         "queue": task.request.get("delivery_info", {}).get("routing_key"),
     }
 
-    publish_tm = task.request.get("x_publish_tm")
+    publish_tm = task.request.get(_PUBLISH_TIME_HEADER)
     if publish_tm:
         log_data["publish_tm"] = publish_tm
         log_data["start_delay"] = (
@@ -104,8 +104,13 @@ def _task_postrun(
 
 
 def connect_signals() -> None:
+    worker_process_init.connect(_setup_telemetry)
     setup_logging.connect(_setup_logging)
     celeryd_after_setup.connect(_log_celery_startup)
     before_task_publish.connect(_add_task_meta)
-    task_prerun.connect(_task_prerun)
+
+    # The order is important. We want our postrun to run before otel's,
+    # and our prerun to run after otel's
     task_postrun.connect(_task_postrun)
+    CeleryInstrumentor().instrument()  # type: ignore[no-untyped-call]
+    task_prerun.connect(_task_prerun)

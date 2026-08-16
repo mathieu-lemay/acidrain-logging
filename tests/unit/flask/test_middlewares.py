@@ -1,13 +1,14 @@
 import importlib.metadata
 from http import HTTPStatus
 from unittest.mock import Mock, patch
-from uuid import uuid4
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from flask import Flask
 from flask.testing import FlaskClient
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging import LogConfig, OutputFormat
@@ -18,7 +19,7 @@ from acidrain_logging.testing.flask import create_app
 
 @pytest.fixture(scope="module")
 def log_config() -> LogConfig:
-    logger_levels = {"httpx": "ERROR"}
+    logger_levels = {"httpx2": "ERROR"}
     return LogConfigFactory.build(
         output_format=OutputFormat.CONSOLE, level="INFO", logger_levels=logger_levels
     )
@@ -51,37 +52,48 @@ def test_context_reset_middleware(
     assert "extra_value" not in log_values
 
 
-def test_trace_id_middleware_adds_trace_id_when_no_header(
-    api_client: FlaskClient, caplog: LogCaptureFixture
+def test_trace_id_middleware_adds_trace_id_to_response_headers(
+    api_client: FlaskClient, faker: Faker
 ) -> None:
-    trace_id = uuid4()
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
 
-    with patch(f"{middlewares.__name__}.uuid4") as uuid4_mock:
-        uuid4_mock.return_value = trace_id
+    traceparent = f"00-{trace_id}-{span_id}-00"
+
+    resp = api_client.get("/", headers={"traceparent": traceparent})
+
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.headers.get("X-Trace-Id") == str(trace_id)
+
+
+def test_trace_id_middleware_does_nothing_if_span_is_invalid(
+    api_client: FlaskClient,
+) -> None:
+    with patch(f"{middlewares.__name__}.get_current_span_context", return_value=None):
         resp = api_client.get("/")
 
     assert resp.status_code == HTTPStatus.OK
-
-    assert len(caplog.records) == 1
-
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
+    assert resp.headers.get("X-Trace-Id") is None
 
 
-def test_trace_id_middleware_re_uses_trace_id_from_headers(
-    api_client: FlaskClient, caplog: LogCaptureFixture, faker: Faker
+def test_otel_instrumentation_re_uses_trace_id_from_headers(
+    api_client: FlaskClient, span_exporter: InMemorySpanExporter, faker: Faker
 ) -> None:
-    trace_id = faker.pystr()
+    trace_id = faker.hexify("^" * 32)
+    span_id = faker.hexify("^" * 16)
 
-    resp = api_client.get("/", headers={"x-trace-id": trace_id})
+    resp = api_client.get("/", headers={"traceparent": f"00-{trace_id}-{span_id}-01"})
     assert resp.status_code == HTTPStatus.OK
 
-    assert len(caplog.records) == 1
+    span = next(
+        (s for s in span_exporter.get_finished_spans() if s.name == "GET /"), None
+    )
+    assert span is not None
+    assert trace.format_trace_id(span.context.trace_id) == trace_id
 
-    log_values = caplog.records[0].msg
-    assert isinstance(log_values, dict)  # type check
-    assert log_values["trace_id"] == str(trace_id)
+    # The exported span should have our injected span_id as its parent
+    assert span.parent is not None
+    assert trace.format_span_id(span.parent.span_id) == span_id
 
 
 @patch(f"{middlewares.__name__}.time")
@@ -122,9 +134,7 @@ def test_log_request_middleware(
 
 
 def test_log_request_middleware_ignores_elapsed_if_theres_no_start_time(
-    api_app: Flask,
-    api_client: FlaskClient,
-    caplog: LogCaptureFixture,
+    api_app: Flask, api_client: FlaskClient, caplog: LogCaptureFixture
 ) -> None:
     funcs = api_app.before_request_funcs
     api_app.before_request_funcs = {}
@@ -135,9 +145,12 @@ def test_log_request_middleware_ignores_elapsed_if_theres_no_start_time(
 
     assert resp.status_code == HTTPStatus.OK
 
-    assert len(caplog.records) == 1
+    rec = next(
+        (r for r in caplog.records if r.name.startswith("acidrain_logging.")), None
+    )
 
-    log_values = caplog.records[0].msg
+    assert rec is not None
+    log_values = rec.msg
     assert isinstance(log_values, dict)  # type check
 
     assert log_values["event"] == "GET / 200"

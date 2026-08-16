@@ -21,18 +21,6 @@ class InvalidLogLevelError(Exception):
         super().__init__(f"Invalid log level: {value}")
 
 
-class DatadogSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="dd_")
-
-    injection_enabled: bool = True
-    env: str = ""
-    service: str = ""
-    version: str = ""
-
-    def is_enabled(self) -> bool:
-        return self.injection_enabled and any((self.env, self.service, self.version))
-
-
 class LogConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="acidrain_log_", env_ignore_empty=True)
 
@@ -43,8 +31,7 @@ class LogConfig(BaseSettings):
     timestamp_format: str = "iso"
     timestamp_key: str = "timestamp"
     level_names: dict[str, str] | None = None
-
-    datadog: DatadogSettings = Field(default_factory=DatadogSettings)
+    trace_injection_enabled: bool = True
 
     @field_validator("level")
     def validate_log_level(cls, value: str) -> str:
@@ -56,3 +43,19 @@ class LogConfig(BaseSettings):
             raise InvalidLogLevelError(value)
 
         return sanitized
+
+
+class SpanExporterType(StrEnum):
+    __slots__ = ()
+
+    CONSOLE = "console"
+    OTLP = "otlp"
+    NONE = "none"
+
+
+class OtelConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="acidrain_otel_", env_ignore_empty=True
+    )
+
+    span_exporter: SpanExporterType = SpanExporterType.OTLP

@@ -5,7 +5,7 @@ description = "A logging configuration library"
 authors = [
     { name = "Mathieu Lemay", email = "acidrain1@gmail.com" }
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11,<4"
 dependencies = [
@@ -14,6 +14,9 @@ dependencies = [
     "pydantic (>=2.5.3,<3.0.0)",
     "pydantic-settings (>=2.2.0,<3.0.0)",
     "structlog>=25.1.0",
+    "opentelemetry-api (>=1.37.0,<2.0.0)",
+    "opentelemetry-sdk (>=1.37.0,<2.0.0)",
+    "opentelemetry-exporter-otlp-proto-grpc (>=1.37.0,<2.0.0)",
 ]
 
 [dependency-groups]
@@ -21,7 +24,7 @@ dev = [
     "celery-types>=0.23.0",
     "faker>=37.4.0",
     "gunicorn>=23.0.0",
-    "httpx>=0.28.1",
+    "httpx2>=2.10.0,<3.0.0",
     "mypy>=2.0.0,<3.0.0",
     "polyfactory>=2.22.0",
     "pytest>=9.0.3,<10.0.0",
@@ -31,14 +34,24 @@ dev = [
     "pytest-freezer>=0.4.9",
     "pytz>=2025.2",
     "setuptools>=80.9.0", # HACK: Needed for PyCharm
+    "tenacity>=9.1.2",
     "types-pytz>=2025.2.0.20250516",
 ]
 
 [project.optional-dependencies]
-celery = ["celery[redis] (>=5.2.7,<6.0.0)"]
-datadog = ["datadog (>=0.53.0,<0.54.0)", "ddtrace (>=4.10.5,<5.0.0)"]
-fastapi = ["fastapi (>=0.141.1,<0.142.0)", "uvicorn (>=0.52.1,<0.53.0)"]
-flask = ["flask (>=3.0.0,<4.0.0)"]
+celery = [
+    "celery[redis] (>=5.2.7,<6.0.0)",
+    "opentelemetry-instrumentation-celery (>=0.65b0,<0.66)",
+]
+fastapi = [
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.52.1,<0.53.0)",
+    "opentelemetry-instrumentation-fastapi (>=0.65b0,<0.66)",
+]
+flask = [
+    "flask (>=3.0.0,<4.0.0)",
+    "opentelemetry-instrumentation-flask (>=0.65b0,<0.66)",
+]
 
 [tool.uv]
 add-bounds = "major"
@@ -53,7 +66,6 @@ exclude_lines = [
 namespace_packages = true
 explicit_package_bases = true
 strict = true
-show_error_codes = true
 plugins = [
     "pydantic.mypy",
 ]
@@ -87,13 +99,14 @@ select = [
     "ALL"
 ]
 ignore = [
-    "COM", # flake8-commas
-    "FIX", # flake8-fixme
-    "TD", # flake8-todos
+    "COM",  # flake8-commas
+    "CPY",  # flake8-copyright
+    "FIX",  # flake8-fixme
+    "TD",  # flake8-todos
 
-    "D10", # Missing docstring in ...
-    "D203", # 1 blank line required before class docstring
-    "D212", # Multi-line docstring summary should start at the first line
+    "D10",  # Missing docstring in ...
+    "D203",  # 1 blank line required before class docstring
+    "D212",  # Multi-line docstring summary should start at the first line
 ]
 
 [tool.ruff.lint.pep8-naming]

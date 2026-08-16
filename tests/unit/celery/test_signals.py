@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import ANY
-from uuid import UUID
 
 import pytest
 import structlog
@@ -8,6 +7,9 @@ from _pytest.logging import LogCaptureFixture
 from celery import Celery, Task
 from celery.contrib.testing.worker import TestWorkController
 from freezegun import freeze_time
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import TracerProvider
 from structlog.contextvars import bound_contextvars
 
 from acidrain_logging.celery.signals import connect_signals, utcnow
@@ -104,20 +106,13 @@ def test_task_metadata_is_logged_when_task_completes(
     assert 0 < record["task"]["duration"] <= (max_start - min_start).total_seconds()
 
 
-@pytest.mark.parametrize("current_trace_id", [None, "some-trace-id"])
 def test_trace_id_is_propagated_to_all_task_logs(
     logging_task: "LoggingTask",
     caplog: LogCaptureFixture,
-    current_trace_id: str | None,
+    span_exporter: InMemorySpanExporter,
 ) -> None:
-    """
-    All logs should contain the trace id.
-
-    If there was a trace id in the context when the task was published, that one should
-    be propagated. Otherwise, a new one will be created.
-    """
-    with bound_contextvars(trace_id=current_trace_id):
-        result_future = logging_task.apply_async()
+    """All logs should contain the trace id and a span id."""
+    result_future = logging_task.apply_async()
 
     # Ensure the task has completed with success
     assert result_future.get(timeout=2) == 0
@@ -127,24 +122,64 @@ def test_trace_id_is_propagated_to_all_task_logs(
         f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-    if current_trace_id:  # noqa: SIM108  # Use binary operator. The intent is clearer with an explicit if / else
-        expected_trace_id = current_trace_id
-    else:
-        # This validates that the record includes a trace id and that it's a valid UUID
-        expected_trace_id = str(UUID(task_start_record["trace_id"]))
+    assert "otel.trace_id" in task_start_record
+    assert "otel.span_id" in task_start_record
 
-    task_running_record = find_log_record(
-        caplog, "Test task is running", result_future.task_id
+    expected_trace_id = task_start_record["otel.trace_id"]
+    expected_span_id = task_start_record["otel.span_id"]
+
+    records = [
+        task_start_record,
+        find_log_record(caplog, "Test task is running", result_future.task_id),
+        find_log_record(
+            caplog,
+            f"Task complete: {__name__}.{logging_task.__name__}",
+            result_future.task_id,
+        ),
+    ]
+
+    assert len(records) == 3
+
+    # Ensure all logs have the same trace id
+    assert {e["otel.trace_id"] for e in records} == {expected_trace_id}
+
+    # Ensure all logs have the same span id
+    assert {e["otel.span_id"] for e in records} == {expected_span_id}
+
+    span = next(
+        (
+            s
+            for s in span_exporter.get_finished_spans()
+            if trace.format_span_id(s.context.span_id) == expected_span_id
+        ),
+        None,
     )
-    task_complete_record = find_log_record(
+    assert span is not None
+    assert trace.format_trace_id(span.context.trace_id) == expected_trace_id
+
+
+def test_span_is_propagated_to_started_tasks(
+    logging_task: "LoggingTask",
+    caplog: LogCaptureFixture,
+    tracer_provider: TracerProvider,
+) -> None:
+    """Current trace and span should be propagated to published tasks."""
+    tracer = trace.get_tracer(__name__, "0.0.0", tracer_provider)
+    with tracer.start_as_current_span("test-span") as span:
+        trace_id = span.get_span_context().trace_id
+
+        result_future = logging_task.apply_async()
+
+        # Ensure the task has completed with success
+        assert result_future.get(timeout=2) == 0
+
+    task_start_record = find_log_record(
         caplog,
-        f"Task complete: {__name__}.{logging_task.__name__}",
+        f"Received task: {__name__}.{logging_task.__name__}",
         result_future.task_id,
     )
-
-    assert task_start_record["trace_id"] == expected_trace_id
-    assert task_running_record["trace_id"] == expected_trace_id
-    assert task_complete_record["trace_id"] == expected_trace_id
+    assert "otel.trace_id" in task_start_record
+    assert task_start_record["otel.trace_id"] == trace.format_trace_id(trace_id)
 
 
 def test_task_publish_time_is_logged_when_task_starts(
